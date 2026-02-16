@@ -4,7 +4,7 @@
 set -e
 
 # Fetch schema from API
-SCHEMA=$(curl -s https://api.mpak.dev/docs/json | \
+SCHEMA=$(curl -s https://registry.mpak.dev/docs/json | \
   jq '.paths["/v1/skills/announce"].post.requestBody.content["application/json"].schema.properties.skill')
 
 if [ "$SCHEMA" = "null" ] || [ -z "$SCHEMA" ]; then
