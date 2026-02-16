@@ -78,7 +78,7 @@ jobs:
         id: oidc
         run: |
           TOKEN=$(curl -sS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
-            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=https://www.mpak.dev" | jq -r '.value')
+            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=https://mpak.dev" | jq -r '.value')
           echo "::add-mask::$TOKEN"
           echo "token=$TOKEN" >> $GITHUB_OUTPUT
 
