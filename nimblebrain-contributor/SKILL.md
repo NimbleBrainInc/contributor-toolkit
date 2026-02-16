@@ -35,7 +35,7 @@ metadata:
   examples:
     - prompt: I'm a new contributor, help me get started
       context: First day contributing to NimbleBrain
-    - prompt: What integrations are available to build?
+    - prompt: What's available to work on?
       context: Looking for work to pick up
     - prompt: File an issue for a Slack MCP server
       context: Proposing a new integration
