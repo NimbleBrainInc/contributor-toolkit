@@ -2,7 +2,7 @@
 name: build-mcpb
 description: Build MCP servers end-to-end. Scaffolds a production-ready Python/FastMCP server from API documentation, implements tools, validates the MCPB bundle, and authors companion skills. Covers the full lifecycle from API analysis to PR-ready deliverable. Use when building a new MCP server, wrapping an API, or creating an integration. Triggers include "build an MCP server", "create a server for X", "/build-mcpb".
 license: Apache-2.0
-compatibility: Requires Python 3.13+, uv, ruff, ty, Docker, mpak CLI. Claude Code with filesystem access.
+compatibility: Python 3.13+, uv, ruff, ty, Docker, mpak CLI. Claude Code with filesystem access.
 allowed-tools: Read Write Bash Glob Grep WebFetch AskUserQuestion
 metadata:
   tags:
