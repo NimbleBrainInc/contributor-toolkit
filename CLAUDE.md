@@ -1,0 +1,53 @@
+# NimbleBrain Contributor Toolkit
+
+Installable skill pack for NimbleBrain open source contributors. Published to mpak as individual skills.
+
+## Structure
+
+```
+nimblebrain-contributor/     # Onboarding, coordination, HQ interaction
+├── SKILL.md
+├── version.txt
+└── references/
+    ├── DEV_SETUP.md
+    └── PIPELINE.md
+
+build-mcpb/                  # Full MCP server build pipeline
+├── SKILL.md
+├── version.txt
+├── references/
+│   ├── CONVENTIONS.md
+│   ├── PATTERNS.md
+│   └── SKILL_FORMAT.md
+└── templates/               # 16 project scaffold templates
+```
+
+## Versioning
+
+Uses release-please with conventional commits. Each skill versions independently.
+
+**DO NOT manually edit:**
+- `version.txt` (release-please only)
+- `.release-please-manifest.json` (release-please only)
+- `SKILL.md` `metadata.version` (publish workflow syncs it)
+
+**Commit format:** `feat(skill-name): description`
+
+| Commit | Result |
+|--------|--------|
+| `fix(build-mcpb): typo` | Patch bump |
+| `feat(build-mcpb): new feature` | Minor bump |
+| `feat(build-mcpb)!: breaking` | Major bump |
+
+## Before Pushing
+
+```bash
+./scripts/validate.sh
+```
+
+## Publishing Flow
+
+1. Edit skill content, commit with conventional format
+2. Push to main
+3. release-please creates release PR
+4. Merge PR -> automatic release + publish to mpak registry

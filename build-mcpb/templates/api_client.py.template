@@ -1,0 +1,126 @@
+"""Async HTTP client for {{service_name}} API."""
+
+import os
+from typing import Any
+
+import aiohttp
+from aiohttp import ClientError
+
+from .api_models import (
+    # Import models here
+)
+
+
+class {{error_class}}(Exception):
+    """Exception raised for {{service_name}} API errors."""
+
+    def __init__(self, status: int, message: str, details: dict[str, Any] | None = None) -> None:
+        self.status = status
+        self.message = message
+        self.details = details
+        super().__init__(f"{{service_name}} API Error {status}: {message}")
+
+
+class {{client_class}}:
+    """Async client for {{service_name}} API."""
+
+    BASE_URL = "{{base_url}}"
+
+    def __init__(
+        self,
+        api_key: str | None = None,
+        timeout: float = 30.0,
+    ) -> None:
+        self.api_key = api_key or os.environ.get("{{env_var_name}}")
+        if not self.api_key:
+            raise ValueError("{{env_var_name}} is required")
+        self.timeout = timeout
+        self._session: aiohttp.ClientSession | None = None
+
+    async def __aenter__(self) -> "{{client_class}}":
+        await self._ensure_session()
+        return self
+
+    async def __aexit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        await self.close()
+
+    async def _ensure_session(self) -> None:
+        if not self._session:
+            headers = {
+                "User-Agent": "mcp-server-{{name}}/0.1.0",
+                "Accept": "application/json",
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {self.api_key}",
+            }
+
+            self._session = aiohttp.ClientSession(
+                headers=headers, timeout=aiohttp.ClientTimeout(total=self.timeout)
+            )
+
+    async def close(self) -> None:
+        """Close the HTTP session."""
+        if self._session:
+            await self._session.close()
+            self._session = None
+
+    async def _request(
+        self,
+        method: str,
+        path: str,
+        params: dict[str, Any] | None = None,
+        json_data: Any | None = None,
+    ) -> dict[str, Any]:
+        """Make an HTTP request to the {{service_name}} API."""
+        await self._ensure_session()
+
+        url = f"{self.BASE_URL}{path}"
+
+        # Clean up params (remove None values)
+        if params:
+            params = {k: v for k, v in params.items() if v is not None}
+
+        try:
+            if not self._session:
+                raise RuntimeError("Session not initialized")
+
+            kwargs: dict[str, Any] = {}
+            if json_data is not None:
+                kwargs["json"] = json_data
+            if params:
+                kwargs["params"] = params
+
+            async with self._session.request(method, url, **kwargs) as response:
+                result = await response.json()
+
+                if response.status >= 400:
+                    error_msg = "Unknown error"
+                    if isinstance(result, dict):
+                        if "error" in result:
+                            error_obj = result["error"]
+                            if isinstance(error_obj, dict):
+                                error_msg = error_obj.get("message", str(error_obj))
+                            else:
+                                error_msg = str(error_obj)
+                        elif "message" in result:
+                            error_msg = result["message"]
+
+                    raise {{error_class}}(response.status, error_msg, result)
+
+                return result  # type: ignore[no-any-return]
+
+        except ClientError as e:
+            raise {{error_class}}(500, f"Network error: {str(e)}") from e
+
+    # ========================================================================
+    # API Methods
+    # ========================================================================
+
+    # TODO: Add API methods here
+    # Example:
+    #
+    # async def list_items(self, limit: int = 20, cursor: str | None = None) -> list[Item]:
+    #     """List items."""
+    #     params: dict[str, Any] = {"limit": limit, "cursor": cursor}
+    #     data = await self._request("GET", "/items", params=params)
+    #     response = ItemListResponse(**data)
+    #     return response.data.items

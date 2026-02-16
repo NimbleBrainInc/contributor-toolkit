@@ -1,0 +1,91 @@
+"""{{service_name}} MCP Server - FastMCP Implementation."""
+
+import logging
+import os
+import sys
+from typing import Any
+
+from fastmcp import Context, FastMCP
+from starlette.requests import Request
+from starlette.responses import JSONResponse
+
+from mcp_{{name_underscore}}.api_client import {{client_class}}, {{error_class}}
+from mcp_{{name_underscore}}.api_models import (
+    # Import models here
+)
+
+# Logging setup
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    stream=sys.stderr,
+)
+logger = logging.getLogger("mcp_{{name_underscore}}")
+
+logger.info("{{service_name}} server module loading...")
+
+# Create MCP server
+mcp = FastMCP("{{service_name}}")
+
+# Global client instance
+_client: {{client_class}} | None = None
+
+
+def get_client(ctx: Context | None = None) -> {{client_class}}:
+    """Get or create the API client instance."""
+    global _client
+    if _client is None:
+        api_key = os.environ.get("{{env_var_name}}")
+        if not api_key:
+            msg = "{{env_var_name}} environment variable is required"
+            if ctx:
+                ctx.error(msg)
+            raise ValueError(msg)
+        _client = {{client_class}}(api_key=api_key)
+    return _client
+
+
+# Health endpoint for HTTP transport
+@mcp.custom_route("/health", methods=["GET"])
+async def health_check(request: Request) -> JSONResponse:
+    """Health check endpoint for monitoring."""
+    return JSONResponse({"status": "healthy", "service": "mcp-{{name}}"})
+
+
+# ============================================================================
+# Tools
+# ============================================================================
+
+# TODO: Add tools here using @mcp.tool() decorator
+# Example:
+#
+# @mcp.tool()
+# async def list_items(
+#     limit: int = 20,
+#     ctx: Context | None = None,
+# ) -> list[Item]:
+#     """List items.
+#
+#     Args:
+#         limit: Number of items to return (1-100, default 20)
+#         ctx: MCP context
+#
+#     Returns:
+#         List of items
+#     """
+#     client = get_client(ctx)
+#     try:
+#         return await client.list_items(limit=limit)
+#     except {{error_class}} as e:
+#         if ctx:
+#             ctx.error(f"API error: {e.message}")
+#         raise
+
+
+# Create ASGI application for HTTP deployment
+app = mcp.http_app()
+
+# Stdio entrypoint for Claude Desktop / mpak
+if __name__ == "__main__":
+    logger.info("Running in stdio mode")
+    mcp.run()
