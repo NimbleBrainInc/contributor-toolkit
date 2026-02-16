@@ -36,7 +36,7 @@ metadata:
   examples:
     - prompt: Build me an MCP server for the Notion API
       context: Starting a new integration from API docs
-    - prompt: Create an MCP server that wraps the Linear API
+    - prompt: Create an MCP server for the Linear API
       context: Building a new server for project management
 ---
 
