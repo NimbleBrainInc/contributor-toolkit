@@ -2,7 +2,7 @@
 name: nimblebrain-contributor
 description: Onboard into NimbleBrain open source and coordinate contributions. Checks your development environment, orients you on what NimbleBrain builds and how we work, helps you pick available work from open issues, file issues, and get started on your first contribution. Use when joining NimbleBrain, looking for work, or interacting with project coordination. Triggers include "I'm a new contributor", "onboard me", "what should I build", "show me open issues", "file an issue".
 license: Apache-2.0
-compatibility: Requires gh (GitHub CLI) authenticated with GitHub. Python 3.13+, uv, ruff, ty for MCP server work.
+compatibility: gh (GitHub CLI) authenticated with GitHub. Python 3.13+, uv, ruff, ty for MCP server work.
 allowed-tools: Read Write Bash Glob Grep WebFetch AskUserQuestion
 metadata:
   tags:
