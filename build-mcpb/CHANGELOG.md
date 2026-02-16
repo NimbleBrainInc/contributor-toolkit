@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1](https://github.com/NimbleBrainInc/contributor-toolkit/compare/build-mcpb/v0.2.0...build-mcpb/v0.2.1) (2026-02-16)
+
+
+### Bug Fixes
+
+* **build-mcpb:** update example prompt ([ed5f379](https://github.com/NimbleBrainInc/contributor-toolkit/commit/ed5f3799e6e93994f58a4c15c3243811ddb5832d))
+
 ## [0.2.0](https://github.com/NimbleBrainInc/contributor-toolkit/compare/build-mcpb/v0.1.0...build-mcpb/v0.2.0) (2026-02-16)
 
 
