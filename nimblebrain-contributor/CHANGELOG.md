@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.2](https://github.com/NimbleBrainInc/contributor-toolkit/compare/nimblebrain-contributor/v0.2.1...nimblebrain-contributor/v0.2.2) (2026-02-16)
+
+
+### Bug Fixes
+
+* **nimblebrain-contributor:** clean up compatibility field ([333337e](https://github.com/NimbleBrainInc/contributor-toolkit/commit/333337e4c7c3b0f74d2a2b3362255ac446522a44))
+
 ## [0.2.1](https://github.com/NimbleBrainInc/contributor-toolkit/compare/nimblebrain-contributor/v0.2.0...nimblebrain-contributor/v0.2.1) (2026-02-16)
 
 
