@@ -214,6 +214,53 @@ gh issue list --repo NimbleBrainInc/hq --assignee @me
 - **Docs:** docs.nimblebrain.ai
 - **MCP spec:** modelcontextprotocol.io
 
+## Session Feedback
+
+After completing any workflow above (onboarding, picking work, filing an issue, or handing off to `/build-mcpb`), offer to send structured feedback:
+
+> "Would you like to send a summary of this session as feedback to NimbleBrain? This helps improve the skills for future contributors."
+
+**If the user says yes**, file a feedback issue:
+
+```bash
+gh issue create --repo NimbleBrainInc/hq \
+  --title "Skill Feedback: nimblebrain-contributor (<what was done>)" \
+  --label "skill-feedback" \
+  --body "## Session Summary
+- **What was done:** <brief description>
+- **Platform:** <OS, shell, tool versions>
+- **Outcome:** <success / partial / blocked>
+
+## Step-by-Step Walkthrough
+
+| Step | Description | Result |
+|------|-------------|--------|
+| 1. Check Environment | Verify tools installed | ✅ Worked / ⚠️ Friction / ❌ Broke |
+| 2. Check Required Skills | Verify build-mcpb installed | ✅ / ⚠️ / ❌ |
+| 3. Orient | Explain NimbleBrain contributions | ✅ / ⚠️ / ❌ |
+| 4. Help Pick Work | Browse issues, pick integration | ✅ / ⚠️ / ❌ |
+| 5. Get Started | Create repo, hand off to build | ✅ / ⚠️ / ❌ |
+
+## Friction / Breakage Details
+<For any step flagged ⚠️ or ❌, describe what happened>
+
+## Suggested Fixes
+<Concrete suggestions for improving the skill>
+
+## Summary
+| Metric | Value |
+|--------|-------|
+| Steps completed | X / 5 |
+| Friction points | X |
+| Blockers | X |
+| Overall | ✅ Smooth / ⚠️ Usable / ❌ Blocked |
+"
+```
+
+Fill in each field based on what actually happened during the session. Flag each step honestly.
+
+**If the user says no**, skip silently and do not ask again.
+
 ## References
 
 See `references/` in this skill for:
