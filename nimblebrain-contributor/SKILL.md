@@ -124,21 +124,21 @@ Every deliverable is a server + skills combo:
 Browse open issues:
 
 ```bash
-# Check open issues on HQ
-gh issue list --repo NimbleBrainInc/hq
+# Check open issues
+gh issue list --repo NimbleBrainInc/.github
 
 # Check for good first issues
-gh issue list --repo NimbleBrainInc/hq --label "good first issue"
+gh issue list --repo NimbleBrainInc/.github --label "good first issue"
 
 # Check available integrations
-gh issue list --repo NimbleBrainInc/hq --label "integration"
+gh issue list --repo NimbleBrainInc/.github --label "integration"
 ```
 
-Present the options and help the user pick something that matches their interest.
+Present the options - if available - and help the user pick something that matches their interest.
 
 #### Step 5: Get Started
 
-Once they've picked an integration:
+Once they've picked an integration, e.g. named `<name>`:
 
 1. Create the server repo:
    ```bash
@@ -151,22 +151,13 @@ Once they've picked an integration:
 
 3. Hand off to `/build-mcpb` to start the build pipeline
 
-### If the user wants to browse work
-
-Browse open issues and present a summary of what's available:
-
-```bash
-gh issue list --repo NimbleBrainInc/hq --state open
-gh issue list --repo NimbleBrainInc/hq --label "integration"
-```
-
 ### If the user wants to file an issue
 
-Help them create a well-structured issue on HQ:
+Help them create a well-structured issue on the org repo:
 
 **New integration proposal:**
 ```bash
-gh issue create --repo NimbleBrainInc/hq \
+gh issue create --repo NimbleBrainInc/.github \
   --title "New MCP Server: <service name>" \
   --body "## Service
 - **API docs:** <url>
@@ -187,7 +178,7 @@ gh issue create --repo NimbleBrainInc/hq \
 
 **Bug report:**
 ```bash
-gh issue create --repo NimbleBrainInc/hq \
+gh issue create --repo NimbleBrainInc/.github \
   --title "<concise description>" \
   --body "## What happened
 <description>
@@ -203,13 +194,13 @@ gh issue create --repo NimbleBrainInc/hq \
 ### If the user wants to check status
 
 ```bash
-gh issue list --repo NimbleBrainInc/hq --state all --limit 20
-gh issue list --repo NimbleBrainInc/hq --assignee @me
+gh issue list --repo NimbleBrainInc/.github --state all --limit 20
+gh issue list --repo NimbleBrainInc/.github --assignee @me
 ```
 
 ## Key Links
 
-- **HQ repo:** github.com/NimbleBrainInc/hq (issues, roadmap)
+- **HQ repo:** github.com/NimbleBrainInc/.github (issues, roadmap)
 - **mpak registry:** mpak.dev (published servers and skills)
 - **Docs:** docs.nimblebrain.ai
 - **MCP spec:** modelcontextprotocol.io
