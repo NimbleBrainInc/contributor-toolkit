@@ -140,7 +140,7 @@ Present the options - if available - and help the user pick something that match
 
 Once they've picked an integration, e.g. named `<name>`:
 
-1. Create the server repo:
+1. Create the server repo (run this outside of any existing git repo):
    ```bash
    gh repo create NimbleBrainInc/mcp-<name> \
      --template NimbleBrainInc/mcp-server-template --public --clone
