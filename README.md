@@ -74,7 +74,7 @@ git commit -m "feat(build-mcpb): add GraphQL client support"
 
 ## Links
 
-- [NimbleBrain HQ](https://github.com/NimbleBrainInc/hq) - Issues, coordination
+- [NimbleBrain HQ](https://github.com/NimbleBrainInc/.github) - Issues, coordination
 - [MCP Server Template](https://github.com/NimbleBrainInc/mcp-server-template)
 - [mpak Registry](https://mpak.dev)
 - [Agent Skills Spec](https://agentskills.io/specification)
