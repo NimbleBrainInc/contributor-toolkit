@@ -175,7 +175,7 @@ use to automate real business workflows for real users.
 
 ## What a Contributor Actually Ships
 
-A GitHub repo under `NimbleBrainInc/` containing:
+A GitHub repo under `NimbleBrainInc/` containing (if source code is in Python):
 
 ```
 mcp-<service>/
@@ -183,10 +183,6 @@ mcp-<service>/
 ├── src/mcp_<service>/
 │   ├── server.py        ← FastMCP server with 5+ tools
 │   └── api_client.py    ← async HTTP client for the target API
-# Node.js/TypeScript
-├── src/
-│   ├── server.ts        ← FastMCP server with 5+ tools
-│   └── client.ts        ← async HTTP client for the target API
 ├── skills/
 │   ├── <workflow-1>/SKILL.md
 │   └── <workflow-2>/SKILL.md
