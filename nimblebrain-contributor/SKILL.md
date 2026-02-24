@@ -58,16 +58,14 @@ Use the `AskUserQuestion` tool to present four options:
 - "Check on my work" → Path C
 - "Learn about the ecosystem" → Path D
 
-If the user arrived with a clear intent already stated (e.g. "file an issue for Slack"),
-skip the question and route directly.
+If the user arrived with a clear intent already stated (e.g. "file an issue for Slack"), skip the question and route directly.
 
 ## Process
 
 ### Path A: Finding Work
 
 Browse issues immediately — do not orient upfront. One sentence of context is enough:
-"NimbleBrain contributions are MCP servers — integrations that connect AI assistants
-to real services. Each ships with companion skills."
+"NimbleBrain contributions are MCP servers — integrations that connect AI assistants to real services. Each ships with companion skills."
 
 Then run:
 
@@ -76,17 +74,14 @@ gh search issues --owner NimbleBrainInc --state open --label "integration"
 gh search issues --owner NimbleBrainInc --state open --label "good first issue"
 ```
 
-Present results clearly — for each issue, summarize the service and what it does.
-Do not dump the raw list. Also share the project board for visual browsing:
+Present results clearly — for each issue, summarize the service and what it does. Do not dump the raw list. Also share the project board for visual browsing:
 https://github.com/orgs/NimbleBrainInc/projects/10
 
-If the list is empty: let the user know and offer to help them propose something
-new instead (→ Path B).
+If the list is empty: let the user know and offer to help them propose something new instead (→ Path B).
 
 **Help them pick:**
 
-Suggest 2–3 options that seem like a good fit based on anything you've picked up
-about their background or interests, but let them choose. Don't pick for them.
+Suggest 2–3 options that seem like a good fit based on anything you've picked up about their background or interests, but let them choose. Don't pick for them.
 
 If nothing resonates:
 "Is there a service you use regularly that you'd like to build an integration for?
@@ -108,10 +103,18 @@ If ready → Ready to Build.
 
 For users who have picked an integration and are ready to start. May arrive here from Path B or directly from calibration if they already know what they want to build.
 
+Start by asking which language they'll be building in using `AskUserQuestion`:
+"Which language are you building in?"
+- "Python"
+- "Node / TypeScript"
+
+Keep this throughout every step — it determines which tools to check, which template to use, and how the build pipeline runs.
+
 **Step 1: Check environment**
 
-Run these checks and summarize what's missing — do not install anything automatically:
+Run the checks for their language and summarize what's missing — do not install anything automatically:
 
+Python:
 ```bash
 python3 --version   # Need 3.13+
 uv --version
@@ -123,7 +126,19 @@ gh auth status
 mpak --version
 ```
 
+Node / TypeScript:
+```bash
+node --version      # Need 18+
+npm --version
+docker --version
+gh --version
+gh auth status
+mpak --version
+```
+
 For each missing tool, offer the install command and wait for the user to confirm before proceeding. Use `references/DEV_SETUP.md` for full setup instructions if needed. Once the environment is good, move on.
+
+**Python installs:**
 
 | Tool | Install |
 |------|---------|
@@ -131,6 +146,15 @@ For each missing tool, offer the install command and wait for the user to confir
 | uv | `curl -LsSf https://astral.sh/uv/install.sh \| sh` |
 | ruff | `uv tool install ruff` |
 | ty | `uv tool install ty` |
+| Docker | macOS: `brew install --cask docker` / Linux: see docs.docker.com |
+| gh | macOS: `brew install gh` / Linux: `sudo apt install gh` |
+| mpak | `npm install -g @nimblebrain/mpak` |
+
+**Node / TypeScript installs:**
+
+| Tool | Install |
+|------|---------|
+| Node.js | macOS: `brew install node` / Linux: `nvm install --lts` |
 | Docker | macOS: `brew install --cask docker` / Linux: see docs.docker.com |
 | gh | macOS: `brew install gh` / Linux: `sudo apt install gh` |
 | mpak | `npm install -g @nimblebrain/mpak` |
@@ -148,14 +172,23 @@ mpak skill install @nimblebraininc/build-mcpb
 
 **Step 3: Create the server repo**
 
-Before running anything, confirm with the user:
+Make sure they are outside of any existing git repo. If they aren't, help them navigate to a suitable directory first.
+
+Then confirm before running:
 "This will create a public repo at `NimbleBrainInc/mcp-<name>` on GitHub. Ready to go?"
 
-Once confirmed, and making sure they are outside of any existing git repo:
+Once confirmed:
+
+Python:
 ```bash
 gh repo create NimbleBrainInc/mcp-<name> \
-  --template NimbleBrainInc/mcp-server-template --public --clone
-cd mcp-<name>
+  --template NimbleBrainInc/mcp-server-template-python --public --clone
+```
+
+Node / TypeScript:
+```bash
+gh repo create NimbleBrainInc/mcp-<name> \
+  --template NimbleBrainInc/mcp-server-template-node-ts --public --clone
 ```
 
 **Step 4: API key**
@@ -164,9 +197,12 @@ Ask the user to have their API key for the target service ready. They'll need it
 
 **Step 5: Hand off**
 
-"Your environment is set up and the repo is ready. Let's build — run `/build-mcpb <name>` to start the pipeline."
+Before sending them off, offer a preview:
+"Your environment is set up and the repo is ready. Want a quick overview of what the build pipeline covers, or ready to jump straight in?"
 
-For reference on what the pipeline covers end-to-end, see `references/PIPELINE.md`.
+If they want a preview → draw from `references/PIPELINE.md`, then hand off.
+
+When ready: "Navigate into `mcp-<name>` and run `/build-mcpb` to kick off the build."
 
 ### Path B: Filing an Issue
 
@@ -264,15 +300,9 @@ If new work → Path A. If continuing a build → Ready to Build.
 
 ### Path D: Exploring the Ecosystem
 
-For users who explicitly chose "Learn about the ecosystem." Draw from
-`references/ECOSYSTEM.md` to explain at the right depth, matching their background.
-Use the analogies in ECOSYSTEM.md for users coming from Docker or npm/pip worlds.
-Always share the relevant link from `references/RESOURCES.md` so they can go deeper
-on their own.
+For users who explicitly chose "Learn about the ecosystem." Draw from `references/ECOSYSTEM.md` to explain at the right depth, matching their background. Use the analogies in ECOSYSTEM.md for users coming from Docker or npm/pip worlds. Always share the relevant link from `references/RESOURCES.md` so they can go deeper on their own.
 
-Ask what they're most curious about:
-"What would you like to understand first — what NimbleBrain builds, how MCP works,
-what mpak does, or how the contribution model works?"
+Ask what they're most curious about: "What would you like to understand first — what NimbleBrain builds, how MCP works, what mpak does, or how the contribution model works?"
 
 At natural pauses, offer a next step without pushing:
 "Want to keep exploring, or would you like to see what's available to work on?"
