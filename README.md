@@ -37,15 +37,11 @@ claude
 
 ## Developing Locally
 
-To iterate on skills without publishing to mpak on every change, symlink the repo
-folders directly into Claude Code's skills directory.
+To quickly iterate on skills without publishing to mpak on every change, symlink the repo folders directly into Claude Code's skills directory.
 
 **1. Backup existing installs**
 
-Move (not copy) existing installs out of `~/.claude/skills/` first. Use a name that
-does not share a prefix with the real skill name — Claude Code will pick up any folder
-in that directory as a skill, including backups.
-
+Move (not copy) existing installs out of `~/.claude/skills/` first:
 ```bash
 mkdir -p ~/claude-skills-backup
 mv ~/.claude/skills/nimblebrain-contributor ~/claude-skills-backup/
@@ -59,13 +55,11 @@ ln -s /path/to/contributor-toolkit/nimblebrain-contributor ~/.claude/skills/nimb
 ln -s /path/to/contributor-toolkit/build-mcpb ~/.claude/skills/build-mcpb
 ```
 
-Any edit you make in the repo is immediately live — no reinstall needed. Restart
-Claude Code to pick up changes.
+Any edit you make in the repo is immediately live — no reinstall needed. Restart Claude Code to pick up changes.
 
 **3. Git branching**
 
-Since the skills are symlinked to the repo, switching branches instantly changes
-what the live skill sees. Useful for testing experimental changes against main.
+Since the skills are symlinked to the repo, switching branches instantly changes what the live skill sees. Useful for testing experimental changes against main.
 
 ## Versioning
 
