@@ -58,16 +58,14 @@ Use the `AskUserQuestion` tool to present four options:
 - "Check on my work" → Path C
 - "Learn about the ecosystem" → Path D
 
-If the user arrived with a clear intent already stated (e.g. "file an issue for Slack"),
-skip the question and route directly.
+If the user arrived with a clear intent already stated (e.g. "file an issue for Slack"), skip the question and route directly.
 
 ## Process
 
 ### Path A: Finding Work
 
 Browse issues immediately — do not orient upfront. One sentence of context is enough:
-"NimbleBrain contributions are MCP servers — integrations that connect AI assistants
-to real services. Each ships with companion skills."
+"NimbleBrain contributions are MCP servers — integrations that connect AI assistants to real services. Each ships with companion skills."
 
 Then run:
 
@@ -76,17 +74,14 @@ gh search issues --owner NimbleBrainInc --state open --label "integration"
 gh search issues --owner NimbleBrainInc --state open --label "good first issue"
 ```
 
-Present results clearly — for each issue, summarize the service and what it does.
-Do not dump the raw list. Also share the project board for visual browsing:
+Present results clearly — for each issue, summarize the service and what it does. Do not dump the raw list. Also share the project board for visual browsing:
 https://github.com/orgs/NimbleBrainInc/projects/10
 
-If the list is empty: let the user know and offer to help them propose something
-new instead (→ Path B).
+If the list is empty: let the user know and offer to help them propose something new instead (→ Path B).
 
 **Help them pick:**
 
-Suggest 2–3 options that seem like a good fit based on anything you've picked up
-about their background or interests, but let them choose. Don't pick for them.
+Suggest 2–3 options that seem like a good fit based on anything you've picked up about their background or interests, but let them choose. Don't pick for them.
 
 If nothing resonates:
 "Is there a service you use regularly that you'd like to build an integration for?
@@ -148,13 +143,24 @@ mpak skill install @nimblebraininc/build-mcpb
 
 **Step 3: Create the server repo**
 
-Before running anything, confirm with the user:
-"This will create a public repo at `NimbleBrainInc/mcp-<name>` on GitHub. Ready to go?"
+First, ask which language they'll be building in using `AskUserQuestion`:
+"Which language are you building in?"
+- "Python" → use `--template NimbleBrainInc/mcp-server-template-python`
+- "Node / TypeScript" → use `--template NimbleBrainInc/mcp-server-template-node-ts`
 
-Once confirmed, and making sure they are outside of any existing git repo:
+Then make sure they are outside of any existing git repo. If they aren't, help them navigate to a suitable directory first.
+
+Once that's confirmed, ask before running:
 ```bash
+# Python
 gh repo create NimbleBrainInc/mcp-<name> \
-  --template NimbleBrainInc/mcp-server-template --public --clone
+  --template NimbleBrainInc/mcp-server-template-python --public --clone
+
+# Node / TypeScript
+gh repo create NimbleBrainInc/mcp-<name> \
+  --template NimbleBrainInc/mcp-server-template-node-ts --public --clone
+```
+```bash
 cd mcp-<name>
 ```
 
@@ -264,15 +270,9 @@ If new work → Path A. If continuing a build → Ready to Build.
 
 ### Path D: Exploring the Ecosystem
 
-For users who explicitly chose "Learn about the ecosystem." Draw from
-`references/ECOSYSTEM.md` to explain at the right depth, matching their background.
-Use the analogies in ECOSYSTEM.md for users coming from Docker or npm/pip worlds.
-Always share the relevant link from `references/RESOURCES.md` so they can go deeper
-on their own.
+For users who explicitly chose "Learn about the ecosystem." Draw from `references/ECOSYSTEM.md` to explain at the right depth, matching their background. Use the analogies in ECOSYSTEM.md for users coming from Docker or npm/pip worlds. Always share the relevant link from `references/RESOURCES.md` so they can go deeper on their own.
 
-Ask what they're most curious about:
-"What would you like to understand first — what NimbleBrain builds, how MCP works,
-what mpak does, or how the contribution model works?"
+Ask what they're most curious about: "What would you like to understand first — what NimbleBrain builds, how MCP works, what mpak does, or how the contribution model works?"
 
 At natural pauses, offer a next step without pushing:
 "Want to keep exploring, or would you like to see what's available to work on?"
