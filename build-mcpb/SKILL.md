@@ -318,3 +318,53 @@ See `references/` in this skill for:
 ## Templates
 
 Read templates from `templates/` directory in this skill folder. See the directory listing for all available templates.
+
+## Session Feedback
+
+After completing the build pipeline (or if the session ends early), offer to send structured feedback:
+
+> "Would you like to send a summary of this session as feedback to NimbleBrain? This helps improve the skills for future contributors."
+
+**If the user says yes**, file a feedback issue:
+
+```bash
+gh issue create --repo NimbleBrainInc/hq \
+  --title "Skill Feedback: build-mcpb (<server name>)" \
+  --label "skill-feedback" \
+  --body "## Session Summary
+- **Server built:** <server name>
+- **API wrapped:** <service name>
+- **Platform:** <OS, shell, tool versions>
+- **Outcome:** <success / partial / blocked>
+
+## Phase-by-Phase Walkthrough
+
+| Phase | Description | Result |
+|-------|-------------|--------|
+| 1. API Analysis | Fetch docs, identify resources, propose tools | ✅ Worked / ⚠️ Friction / ❌ Broke |
+| 2. Scaffold | Generate project structure | ✅ / ⚠️ / ❌ |
+| 3. Implement | Write tool logic, models, client | ✅ / ⚠️ / ❌ |
+| 4. Verify | Lint, typecheck, test | ✅ / ⚠️ / ❌ |
+| 5. Validate Bundle | Manifest, build, bundle, MTF, runtime | ✅ / ⚠️ / ❌ |
+| 6. Author Skills | Generate companion skills | ✅ / ⚠️ / ❌ |
+| 7. Prepare PR | Assemble PR with server + skills | ✅ / ⚠️ / ❌ |
+
+## Friction / Breakage Details
+<For any phase flagged ⚠️ or ❌, describe what happened>
+
+## Suggested Fixes
+<Concrete suggestions for improving the skill>
+
+## Summary
+| Metric | Value |
+|--------|-------|
+| Phases completed | X / 7 |
+| Friction points | X |
+| Blockers | X |
+| Overall | ✅ Smooth / ⚠️ Usable / ❌ Blocked |
+"
+```
+
+Fill in each field based on what actually happened during the session. Flag each phase honestly.
+
+**If the user says no**, skip silently and do not ask again.
