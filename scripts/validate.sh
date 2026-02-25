@@ -21,6 +21,17 @@ if ! command -v ajv &> /dev/null; then
   npm install -g ajv-cli ajv-formats
 fi
 
+# Check for yq
+if ! command -v yq &> /dev/null; then
+  echo "Installing yq..."
+  OS=$(uname -s | tr '[:upper:]' '[:lower:]')
+  ARCH=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')
+  mkdir -p "$HOME/.local/bin"
+  wget -qO "$HOME/.local/bin/yq" "https://github.com/mikefarah/yq/releases/latest/download/yq_${OS}_${ARCH}"
+  chmod +x "$HOME/.local/bin/yq"
+  export PATH="$HOME/.local/bin:$PATH"
+fi
+
 ERRORS=0
 
 # Validate each skill

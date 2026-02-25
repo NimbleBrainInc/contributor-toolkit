@@ -72,6 +72,7 @@ ty --version                # Type checker
 docker --version            # For testing bundles
 gh --version                # GitHub CLI
 gh auth status              # Must be authenticated
+yq --version               # YAML processor (used by validate.sh)
 ```
 
 **Install commands for missing tools:**
@@ -84,6 +85,7 @@ gh auth status              # Must be authenticated
 | ty | `uv tool install ty` | same |
 | Docker | `brew install --cask docker` | See docs.docker.com |
 | gh | `brew install gh` | `sudo apt install gh` |
+| yq | `brew install yq` | `sudo apt install yq` |
 
 Also check for mpak CLI:
 ```bash
