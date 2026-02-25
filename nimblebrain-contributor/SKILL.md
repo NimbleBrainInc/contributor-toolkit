@@ -2,7 +2,7 @@
 name: nimblebrain-contributor
 description: Get started contributing to NimbleBrain open source. Find available integrations to build, set up your environment, propose new ideas, or check on your work — with depth available whenever you want it. Triggers include "I'm a new contributor", "onboard me", "what should I build", "show me open issues", "file an issue".
 license: Apache-2.0
-compatibility: gh (GitHub CLI) authenticated with GitHub. Python 3.13+, uv, ruff, ty for MCP server work.
+compatibility: gh (GitHub CLI) authenticated with GitHub. Python 3.13+, uv, ruff, ty for Python MCP server work. Node.js 18+, npm for TypeScript MCP server work.
 allowed-tools: Read Write Bash Glob Grep WebFetch AskUserQuestion
 metadata:
   tags:
@@ -32,13 +32,6 @@ metadata:
   author:
     name: NimbleBrain
     url: https://nimblebrain.ai
-  examples:
-    - prompt: I'm a new contributor, help me get started
-      context: First day contributing to NimbleBrain
-    - prompt: What's available to work on?
-      context: Looking for work to pick up
-    - prompt: File an issue for a Slack MCP server
-      context: Proposing a new integration
 ---
 
 # NimbleBrain Contributor
@@ -188,7 +181,7 @@ gh repo create NimbleBrainInc/mcp-<name> \
 Node / TypeScript:
 ```bash
 gh repo create NimbleBrainInc/mcp-<name> \
-  --template NimbleBrainInc/mcp-server-template-node-ts --public --clone
+  --template NimbleBrainInc/mcp-server-template-typescript --public --clone
 ```
 
 **Step 4: API key**
