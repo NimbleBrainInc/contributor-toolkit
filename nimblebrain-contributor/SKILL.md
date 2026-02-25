@@ -190,12 +190,12 @@ Ask the user to have their API key for the target service ready. They'll need it
 
 **Step 5: Hand off**
 
-Before sending them off, offer a preview:
-"Your environment is set up and the repo is ready. Want a quick overview of what the build pipeline covers, or ready to jump straight in?"
+Before closing out, offer a preview:
+"Your environment is set up and the repo is ready. Want a quick overview of what the build pipeline covers before you start, or ready to type `/build-mcpb` now?"
 
-If they want a preview → draw from `references/PIPELINE.md`, then hand off.
+If they want a preview → draw from `references/PIPELINE.md`, then prompt them to type `/build-mcpb`.
 
-When ready: "Navigate into `mcp-<name>` and run `/build-mcpb` to kick off the build."
+When ready: "Type `/build-mcpb` here to kick off the build — no need to open a new session. If you'd prefer a fresh context window, open a new Claude Code session from inside `mcp-<name>` and type `/build-mcpb` there."
 
 ### Path B: Filing an Issue
 
