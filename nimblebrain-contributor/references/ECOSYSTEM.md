@@ -8,7 +8,7 @@
 ## The Stack at a Glance
 
 ```
-NimbleBrain Platform (Studio + Nira AI agent)
+NimbleBrain Platform (Studio + AI agent)
         │  uses
         ▼
     Skills  ──────────────────────────────────────────────┐
@@ -158,15 +158,15 @@ real workflows. Contributors build both.
 
 ## Layer 5: NimbleBrain Platform
 
-**NimbleBrain Studio** is a business automation platform. Users talk to **Nira** (the AI
-agent) to automate workflows using the tools they already use: Notion, HubSpot, Linear,
+**NimbleBrain Studio** is a business automation platform. Users talk to the AI
+agent to automate workflows using the tools they already use: Notion, HubSpot, Linear,
 Stripe, etc.
 
-Under the hood, Nira uses MCP servers to call those external services. The open source
-ecosystem (servers + skills built by contributors) is what gives Nira its breadth of
+Under the hood, the AI agent uses MCP servers to call those external services. The open source
+ecosystem (servers + skills built by contributors) is what gives the AI agent its breadth of
 integrations.
 
-**The contributor's place in this:** Every integration you build becomes a tool Nira can
+**The contributor's place in this:** Every integration you build becomes a tool the AI agent can
 use to automate real business workflows for real users.
 
 > **Resources:** See `RESOURCES.md` → *NimbleBrain Website*, *NimbleBrain Docs*
