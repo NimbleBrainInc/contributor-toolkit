@@ -175,14 +175,15 @@ use to automate real business workflows for real users.
 
 ## What a Contributor Actually Ships
 
-A GitHub repo under `NimbleBrainInc/` containing (if source code is in Python):
+A GitHub repo under `NimbleBrainInc/` containing:
 
 ```
 mcp-<service>/
-# Python
+# if Python
 ├── src/mcp_<service>/
 │   ├── server.py        ← FastMCP server with 5+ tools
 │   └── api_client.py    ← async HTTP client for the target API
+├── tests/
 ├── skills/
 │   ├── <workflow-1>/SKILL.md
 │   └── <workflow-2>/SKILL.md
@@ -191,7 +192,25 @@ mcp-<service>/
 │   ├── scan.yml         ← MTF security scan on every push
 │   └── build-bundle.yml ← multi-platform build + announce on release
 ├── manifest.json        ← MCPB runtime contract
-└── server.json          ← registry metadata (not shipped to users)
+├── server.json          ← registry metadata (not shipped to users)
+├── mpak.json            ← package metadata
+└── Makefile             ← build automation
+
+# if TypeScript
+├── src/
+│   ├── index.ts         ← MCP server entry point, registers all tools
+│   └── utils/apiClient.ts ← async HTTP client for the target API
+├── tests/
+├── skills/
+│   └── <workflow>/SKILL.md
+├── .github/workflows/
+│   ├── ci.yml           ← lint + test + bundle on every push
+│   ├── scan.yml         ← MTF security scan on every push
+│   └── build-bundle.yml ← multi-platform build + announce on release
+├── manifest.json        ← MCPB runtime contract
+├── server.json          ← registry metadata (not shipped to users)
+├── mpak.json            ← package metadata
+└── Makefile             ← build automation
 ```
 
 When the contributor cuts a GitHub Release, the CI/CD handles everything:
