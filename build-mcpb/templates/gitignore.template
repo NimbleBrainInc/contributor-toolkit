@@ -62,7 +62,6 @@ ENV/
 .claude/
 
 # uv
-uv.lock
 .uv/
 
 # ruff

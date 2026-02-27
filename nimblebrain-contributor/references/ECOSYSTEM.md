@@ -8,7 +8,7 @@
 ## The Stack at a Glance
 
 ```
-NimbleBrain Platform (Studio + Nira AI agent)
+NimbleBrain Platform (Studio + AI agent)
         │  uses
         ▼
     Skills  ──────────────────────────────────────────────┐
@@ -158,15 +158,15 @@ real workflows. Contributors build both.
 
 ## Layer 5: NimbleBrain Platform
 
-**NimbleBrain Studio** is a business automation platform. Users talk to **Nira** (the AI
-agent) to automate workflows using the tools they already use: Notion, HubSpot, Linear,
+**NimbleBrain Studio** is a business automation platform. Users talk to the AI
+agent to automate workflows using the tools they already use: Notion, HubSpot, Linear,
 Stripe, etc.
 
-Under the hood, Nira uses MCP servers to call those external services. The open source
-ecosystem (servers + skills built by contributors) is what gives Nira its breadth of
+Under the hood, the AI agent uses MCP servers to call those external services. The open source
+ecosystem (servers + skills built by contributors) is what gives the AI agent its breadth of
 integrations.
 
-**The contributor's place in this:** Every integration you build becomes a tool Nira can
+**The contributor's place in this:** Every integration you build becomes a tool the AI agent can
 use to automate real business workflows for real users.
 
 > **Resources:** See `RESOURCES.md` → *NimbleBrain Website*, *NimbleBrain Docs*
@@ -175,14 +175,15 @@ use to automate real business workflows for real users.
 
 ## What a Contributor Actually Ships
 
-A GitHub repo under `NimbleBrainInc/` containing (if source code is in Python):
+A GitHub repo under `NimbleBrainInc/` containing:
 
 ```
 mcp-<service>/
-# Python
+# if Python
 ├── src/mcp_<service>/
 │   ├── server.py        ← FastMCP server with 5+ tools
 │   └── api_client.py    ← async HTTP client for the target API
+├── tests/
 ├── skills/
 │   ├── <workflow-1>/SKILL.md
 │   └── <workflow-2>/SKILL.md
@@ -191,7 +192,25 @@ mcp-<service>/
 │   ├── scan.yml         ← MTF security scan on every push
 │   └── build-bundle.yml ← multi-platform build + announce on release
 ├── manifest.json        ← MCPB runtime contract
-└── server.json          ← registry metadata (not shipped to users)
+├── server.json          ← registry metadata (not shipped to users)
+├── mpak.json            ← package metadata
+└── Makefile             ← build automation
+
+# if TypeScript
+├── src/
+│   ├── index.ts         ← MCP server entry point, registers all tools
+│   └── utils/apiClient.ts ← async HTTP client for the target API
+├── tests/
+├── skills/
+│   └── <workflow>/SKILL.md
+├── .github/workflows/
+│   ├── ci.yml           ← lint + test + bundle on every push
+│   ├── scan.yml         ← MTF security scan on every push
+│   └── build-bundle.yml ← multi-platform build + announce on release
+├── manifest.json        ← MCPB runtime contract
+├── server.json          ← registry metadata (not shipped to users)
+├── mpak.json            ← package metadata
+└── Makefile             ← build automation
 ```
 
 When the contributor cuts a GitHub Release, the CI/CD handles everything:
