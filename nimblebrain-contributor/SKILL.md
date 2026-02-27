@@ -105,52 +105,7 @@ Keep this throughout every step — it determines which tools to check, which te
 
 **Step 1: Check environment**
 
-Run the checks for their language and summarize what's missing — do not install anything automatically:
-
-Python:
-```bash
-python3 --version   # Need 3.13+
-uv --version
-ruff --version
-ty --version
-docker --version
-gh --version
-gh auth status
-mpak --version
-```
-
-Node / TypeScript:
-```bash
-node --version      # Need 18+
-npm --version
-docker --version
-gh --version
-gh auth status
-mpak --version
-```
-
-For each missing tool, offer the install command and wait for the user to confirm before proceeding. Use `references/DEV_SETUP.md` for full setup instructions if needed. Once the environment is good, move on.
-
-**Python installs:**
-
-| Tool | Install |
-|------|---------|
-| Python 3.13 | `uv python install 3.13` |
-| uv | `curl -LsSf https://astral.sh/uv/install.sh \| sh` |
-| ruff | `uv tool install ruff` |
-| ty | `uv tool install ty` |
-| Docker | macOS: `brew install --cask docker` / Linux: see docs.docker.com |
-| gh | macOS: `brew install gh` / Linux: `sudo apt install gh` |
-| mpak | `npm install -g @nimblebrain/mpak` |
-
-**Node / TypeScript installs:**
-
-| Tool | Install |
-|------|---------|
-| Node.js | macOS: `brew install node` / Linux: `nvm install --lts` |
-| Docker | macOS: `brew install --cask docker` / Linux: see docs.docker.com |
-| gh | macOS: `brew install gh` / Linux: `sudo apt install gh` |
-| mpak | `npm install -g @nimblebrain/mpak` |
+Run the version checks listed in `references/DEV_SETUP.md` for the contributor's chosen language. Summarize what's missing — do not install anything automatically. For each missing tool, offer the install command from DEV_SETUP.md and wait for the user to confirm before proceeding. Once the environment is good, move on.
 
 **Step 2: Check the build-mcpb skill**
 
