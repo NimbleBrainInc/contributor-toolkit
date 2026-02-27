@@ -23,6 +23,7 @@
 ├── CLAUDE.md
 ├── Makefile
 ├── manifest.json
+├── mpak.json
 ├── pyproject.toml
 ├── pytest.ini
 └── README.md

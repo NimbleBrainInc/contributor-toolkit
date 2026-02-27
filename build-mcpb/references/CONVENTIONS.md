@@ -4,7 +4,9 @@
 
 Package names MUST be scoped: `@nimblebraininc/<name>`
 
-Registry rejects other formats (e.g., `ai.nimbletools/name`).
+Name must match the registry regex: `/^@[a-z0-9][a-z0-9-]{0,38}\/[a-z0-9][a-z0-9-]{0,213}$/`
+
+Registry rejects other formats (e.g., `ai.nimbletools/name`, uppercase, underscores in name).
 
 ## Naming
 
@@ -16,6 +18,46 @@ Registry rejects other formats (e.g., `ai.nimbletools/name`).
 | Environment variable | `<NAME>_API_KEY` | `<NAME>_API_KEY` |
 
 ## Manifest (MCPB v0.4)
+
+### Required vs Optional Fields
+
+| Field | Required | Notes |
+|-------|----------|-------|
+| `name` | **Yes** | Must match `/^@[a-z0-9][a-z0-9-]{0,38}\/[a-z0-9][a-z0-9-]{0,213}$/` |
+| `version` | **Yes** | Valid semver (e.g., `0.1.0`) |
+| `description` | **Yes** | Short description |
+| `server.type` | **Yes** | `python`, `node`, or `binary` |
+| `server.mcp_config` | **Yes** | Must have `command` (string) and `args` (string array) |
+| `server.entry_point` | **Yes** | Module path (Python) or `build/index.js` (TypeScript) |
+| `manifest_version` | Recommended | `"0.4"` |
+| `author` | Recommended | `{ "name": "..." }` |
+| `user_config` | If server needs config | Each entry needs `type`; use `sensitive: true` for secrets |
+| `tools` | Recommended | Array of `{ "name": "...", "description": "..." }` |
+| `display_name` | Optional | Human-readable name |
+| `long_description` | Optional | Extended description |
+| `license` | Optional | SPDX identifier |
+| `keywords` | Optional | Array of strings |
+| `repository` | Optional | `{ "type": "git", "url": "..." }` |
+| `compatibility` | Optional | Platforms, runtimes |
+| `_meta` | Recommended | MTF permissions block |
+
+### Variable Resolution
+
+- `${user_config.<field>}` — resolves to the user's configured value for that field (used in `server.mcp_config.env`)
+- `${__dirname}` — resolves to the bundle's install directory at runtime (TypeScript only; never use for Python)
+
+### mpak.json
+
+Required for package claiming on the mpak registry. Must exist in the repo root:
+
+```json
+{
+  "name": "@nimblebraininc/<name>",
+  "maintainers": ["<github-username>"]
+}
+```
+
+The `name` field must exactly match the `name` in `manifest.json`.
 
 ### Python
 
@@ -45,11 +87,28 @@ Registry rejects other formats (e.g., `ai.nimbletools/name`).
         "<NAME>_API_KEY": "${user_config.api_key}"
       }
     }
+  },
+  "tools": [
+    { "name": "tool_name", "description": "What it does" }
+  ],
+  "_meta": {
+    "org.mpaktrust": {
+      "mtf_version": "0.1",
+      "permissions": {
+        "network": "outbound",
+        "filesystem": "none",
+        "subprocess": "none",
+        "environment": "read",
+        "native": "none"
+      }
+    }
   }
 }
 ```
 
 Never use file paths (`${__dirname}/...`) for Python — breaks after bundling.
+
+`server.mcp_config` is **required** — the registry uses it to generate the MCP client configuration. Both `command` and `args` must be present.
 
 ### TypeScript
 

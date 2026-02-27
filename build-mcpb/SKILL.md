@@ -72,9 +72,20 @@ Phase 7: Prepare PR       Assemble PR with server + skills
 
 ## Phase 0: Detect
 
-Auto-detect the project language and service name. The contributor has already created the repo from the correct template via `nimblebrain-contributor`.
+Auto-detect the project language and service name.
 
-### 0a: Language
+### 0a: Prerequisites (cold-start guard)
+
+If the contributor arrived directly (not via `/nimblebrain-contributor`), verify the basics before proceeding:
+
+1. **gh CLI** — `gh auth status` succeeds
+2. **Language toolchain** — Python: `uv --version`, `ruff --version`, `ty --version`; TypeScript: `node --version`, `npm --version`
+3. **mpak CLI** — `mpak --version` succeeds
+4. **Repo structure** — `manifest.json` exists and its `name` starts with `@nimblebraininc/` (confirms it was created from a NimbleBrain template)
+
+If any check fails, tell the contributor what's missing and point them to `/nimblebrain-contributor` or `DEV_SETUP.md` for setup instructions. Don't block on optional tools (e.g., mpak-scanner) — just note they're unavailable and skip the phases that need them.
+
+### 0b: Language
 
 Check the current working directory:
 - `pyproject.toml` exists → **Python**
@@ -82,13 +93,13 @@ Check the current working directory:
 - Neither → ask the user which language they're using
 - Both → ask the user (unusual — clarify which is primary)
 
-### 0b: Service Name
+### 0c: Service Name
 
 1. If `manifest.json` exists, parse the `name` field and strip the scope: `@nimblebraininc/<name>` → `<name>`
 2. Otherwise, derive from the directory name: strip `mcp-` prefix (e.g., `mcp-stripe` → `stripe`)
 3. If neither works, ask the user
 
-### 0c: Naming Variables
+### 0d: Naming Variables
 
 Derive all naming from the service name:
 
@@ -99,7 +110,7 @@ Derive all naming from the service name:
 | Source directory | `src/mcp_<name>/` | `src/` |
 | Env var | `<NAME>_API_KEY` | `<NAME>_API_KEY` |
 
-### 0d: Confirm
+### 0e: Confirm
 
 Show detection results and ask the user to confirm before proceeding:
 
@@ -228,13 +239,33 @@ This runs: `format:check` → `lint` → `typecheck` → `test`
 
 ### 5a: Manifest Validation
 
-Check `manifest.json` against MCPB v0.4 spec. See `references/CONVENTIONS.md` for the full manifest format per language.
+Check `manifest.json` against the mpak registry schema. See `references/CONVENTIONS.md` for the full manifest format per language.
 
-Key checks:
-- Scoped naming: `@nimblebraininc/<name>`
-- `user_config` entries have `sensitive: true` for API keys
-- **Python:** `server.type: "python"`, `entry_point` is module path
-- **TypeScript:** `server.type: "node"`, `entry_point: "build/index.js"`
+**Registry validation checklist** (read `manifest.json` and verify each):
+
+1. **Name format** — must match `/^@[a-z0-9][a-z0-9-]{0,38}\/[a-z0-9][a-z0-9-]{0,213}$/` (e.g., `@nimblebraininc/stripe`)
+2. **Version** — valid semver string (e.g., `0.1.0`)
+3. **server.type** — must be one of: `python`, `node`, `binary`
+4. **server.mcp_config** — required object with:
+   - `command` (string, required) — e.g., `"python"` or `"node"`
+   - `args` (array of strings, required) — e.g., `["-m", "mcp_stripe.server"]`
+   - `env` (object, optional) — maps env vars to `${user_config.<field>}` references
+5. **user_config entries** — each must have:
+   - `type` (required) — e.g., `"string"`
+   - `sensitive: true` for secrets (API keys, tokens)
+   - Referenced via `${user_config.<field>}` in `server.mcp_config.env`
+6. **tools array** — each entry needs `name` (required) and `description` (recommended)
+7. **Python-specific:** `server.type: "python"`, `entry_point` is module path
+8. **TypeScript-specific:** `server.type: "node"`, `entry_point: "build/index.js"`, `${__dirname}` prefix in args
+
+**mpak.json check** — verify `mpak.json` exists in repo root with:
+```json
+{
+  "name": "@nimblebraininc/<name>",
+  "maintainers": ["<github-username>"]
+}
+```
+This file is required for package claiming on the registry. The `name` must match `manifest.json`.
 
 ### 5b: Build Validation
 
