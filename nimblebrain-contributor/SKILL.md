@@ -118,7 +118,7 @@ If missing:
 mpak skill install @nimblebraininc/build-mcpb
 ```
 
-**Step 3: Create the server repo**
+**Step 3: Create and customize the server repo**
 
 Make sure they are outside of any existing git repo. If they aren't, help them navigate to a suitable directory first.
 
@@ -138,6 +138,52 @@ Node / TypeScript:
 gh repo create NimbleBrainInc/mcp-<name> \
   --template NimbleBrainInc/mcp-server-template-typescript --public --clone
 ```
+
+**Immediately after cloning, `cd` into `mcp-<name>` and replace all template placeholders with the actual service name.** Do not move on until this is done — downstream steps (including `/build-mcpb`) assume the project already has correct names everywhere.
+
+Derive these values from `<name>` (the service name the user chose):
+
+| Variable | Example (`<name>` = `jsonplaceholder`) |
+|---|---|
+| `<name>` | `jsonplaceholder` |
+| `<Name>` (PascalCase) | `Jsonplaceholder` |
+| `<NAME>` (UPPER_SNAKE) | `JSONPLACEHOLDER` |
+| `<display>` (human-readable) | Ask the user, e.g. "JSONPlaceholder" |
+
+**Python template substitutions:**
+
+1. Rename the package directory:
+   ```bash
+   mv src/mcp_example src/mcp_<name>
+   ```
+2. Replace across all files (`*.py`, `*.toml`, `*.json`, `*.md`, `Makefile`, `.env.example`):
+   - `mcp_example` → `mcp_<name>` (package name in imports, paths, logger)
+   - `mcp-example` → `mcp-<name>` (project/bundle name)
+   - `@nimblebraininc/example` → `@nimblebraininc/<name>` (registry identifier)
+   - `ExampleClient` → `<Name>Client` (class name)
+   - `ExampleAPIError` → `<Name>APIError` (class name)
+   - `EXAMPLE_API_KEY` → `<NAME>_API_KEY` (env var)
+   - `https://api.example.com/v1` → leave as TODO for build-mcpb to fill with actual API URL
+   - `https://example.com/settings/api` → leave as TODO for build-mcpb
+   - `mcp-server-example` → `mcp-server-<name>` (User-Agent)
+   - `FastMCP("Example")` → `FastMCP("<display>")` (server display name)
+   - `"example"` in `pyproject.toml` keywords → `"<name>"`
+   - Update `pyproject.toml` URLs to use `mcp-<name>` repo name
+   - Update README title and description to reference `<display>` instead of "Example"
+
+**TypeScript template substitutions:**
+
+Replace across all files (`*.ts`, `*.json`, `*.md`, `Makefile`, `CLAUDE.md`):
+   - `YOUR_SERVER_NAME` → `<name>`
+   - `YOUR_DISPLAY_NAME` → `<display>`
+   - `YOUR_REPO_NAME` → `mcp-<name>`
+   - `YOUR_API_KEY_ENV_VAR` → `<NAME>_API_KEY`
+   - `YOUR_API_HOST` → leave as TODO for build-mcpb
+   - `YOUR_API_BASE_URL` → leave as TODO for build-mcpb
+   - `YOUR_GITHUB_USERNAME` → look up via `gh api user -q .login`
+   - `YOUR_SERVICE` → `<display>`
+
+After substitutions, do a quick sanity check — grep for any remaining `example`/`Example`/`EXAMPLE` (Python) or `YOUR_` (TypeScript) across the project. If any remain, fix them. Then confirm to the user: "Template customized — all placeholder names replaced with `<name>`."
 
 **Step 4: API key**
 
