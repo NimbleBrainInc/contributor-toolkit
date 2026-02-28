@@ -401,6 +401,4 @@ See `references/` in this skill for:
 - `PATTERNS.md` — Complete code patterns, directory structures, CI workflows (Python + TypeScript)
 - `SKILL_FORMAT.md` — Skill frontmatter specification and validation rules
 
-Python templates are also available in `templates/` within this skill folder.
-
-For TypeScript, the canonical patterns are in the `NimbleBrainInc/mcp-server-template-typescript` GitHub template repo — already cloned when the project was created.
+The canonical project structure comes from the GitHub template repos (`NimbleBrainInc/mcp-server-template-python` and `NimbleBrainInc/mcp-server-template-typescript`), already cloned when the project was created via `/nimblebrain-contributor`.

@@ -293,9 +293,9 @@ Without this, `uv sync` won't install the package and module imports silently fa
     "build": "tsc",
     "start": "node build/index.js --stdio",
     "dev": "tsx src/index.ts --stdio",
-    "lint": "eslint src/ tests/",
-    "format": "prettier --write src/ tests/",
-    "format:check": "prettier --check src/ tests/",
+    "lint": "biome check src/ tests/",
+    "format": "biome format --write src/ tests/",
+    "format:check": "biome format src/ tests/",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "check": "npm run format:check && npm run lint && npm run typecheck && npm run test"
@@ -351,8 +351,8 @@ gh release create v0.2.0 --title "v0.2.0" --notes "- changelog"
 | Aspect | Python | TypeScript |
 |--------|--------|------------|
 | Package manager | uv | npm |
-| Linting | ruff | ESLint |
-| Formatting | ruff | Prettier |
+| Linting | ruff | Biome |
+| Formatting | ruff | Biome |
 | Type checking | ty | tsc --noEmit |
 | Testing | pytest + pytest-asyncio | Vitest |
 | Dev runner | — | tsx |

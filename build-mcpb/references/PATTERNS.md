@@ -466,7 +466,7 @@ make bundle                          # Vendor deps + mcpb pack (local bundle)
 ├── LICENSE
 ├── Makefile
 ├── README.md
-├── eslint.config.js
+├── biome.json
 ├── manifest.json             # MCPB manifest (v0.4) — version source of truth
 ├── mpak.json
 ├── package.json
@@ -770,7 +770,7 @@ src/
 Makefile
 tsconfig.json
 vitest.config.ts
-eslint.config.js
+biome.json
 pyproject.toml
 CLAUDE.md
 README.md
@@ -889,8 +889,8 @@ jobs:
 
 ```bash
 npm install                          # Install dependencies
-npm run format:check                 # Check formatting (Prettier)
-npm run lint                         # Lint (ESLint)
+npm run format:check                 # Check formatting (Biome)
+npm run lint                         # Lint (Biome)
 npm run typecheck                    # Type check (tsc --noEmit)
 npm run test                         # Test (Vitest)
 make check                           # All of the above
