@@ -15,6 +15,8 @@ All phases are handled by `/build-mcpb`. The skill auto-detects language and ser
 ```
 
 The template repo already provides the full project structure:
+
+**Python:**
 - `src/mcp_<name>/server.py` - FastMCP server with tool stubs
 - `src/mcp_<name>/api_client.py` - Async HTTP client
 - `src/mcp_<name>/api_models.py` - Pydantic response models
@@ -24,16 +26,38 @@ The template repo already provides the full project structure:
 - `tests/` - Test stubs
 - `README.md` - Documentation template
 
+**TypeScript:**
+- `src/index.ts` - MCP server entry point with tool registration
+- `src/handlers/` - One file per tool
+- `src/utils/apiClient.ts` - HTTP client
+- `src/types.ts` - Zod API response schemas
+- `src/schemas.ts` - Zod tool input schemas
+- `src/formatters.ts` - Response formatters
+- `src/config.ts` - Environment variable configuration
+- `manifest.json` - MCPB v0.4 manifest
+- `server.json` - Registry metadata
+- `package.json`, `tsconfig.json`, `Makefile`
+- `.github/workflows/` - CI and release workflows
+- `tests/` - Test stubs
+- `README.md` - Documentation template
+
 ## Step 2: Implement Tools
 
-Fill in the tool implementations in `server.py`. Each tool should:
+**Python:** Fill in the tool implementations in `server.py`. Each tool should:
 - Have a clear docstring with Args/Returns
 - Use the async client for API calls
 - Return typed Pydantic models
 - Handle errors via context logging
 
+**TypeScript:** Implement one handler per tool in `src/handlers/`. Each tool should:
+- Have a Zod input schema in `schemas.ts`
+- Use the API client for API calls
+- Return formatted responses via `formatters.ts`
+- Handle errors via `errorResponse()`
+
 ## Step 3: Local Verification
 
+**Python:**
 ```bash
 uv sync --dev
 uv run ruff format src/ tests/
@@ -42,12 +66,18 @@ uv run ty check src/
 uv run pytest tests/ -v
 ```
 
+**TypeScript:**
+```bash
+make check
+```
+This runs: `format:check` → `lint` → `typecheck` → `test`
+
 ## Step 4: Validate Bundle
 
 Phase 5 of `/build-mcpb` handles manifest validation, build verification, bundle inspection, MTF compliance (if scanner is available), and runtime validation with a full MCP handshake.
 
 ```bash
-make bundle    # Vendor deps + mcpb pack (local bundle)
+make bundle
 ```
 
 ## Step 5: Author Companion Skills
@@ -80,7 +110,9 @@ The contributor owns the repo — there is no PR step. The release flow is:
 
 ## Version Management
 
-Version lives in four files that MUST stay in sync:
+Version lives in files that MUST stay in sync:
+
+**Python:**
 
 | File | Field |
 |------|-------|
@@ -88,6 +120,15 @@ Version lives in four files that MUST stay in sync:
 | `server.json` | `version` |
 | `pyproject.toml` | `version` |
 | `src/<package>/__init__.py` | `__version__` |
+
+**TypeScript:**
+
+| File | Field |
+|------|-------|
+| `manifest.json` | `version` |
+| `server.json` | `version` |
+| `package.json` | `version` |
+| `src/constants.ts` | `SERVER_VERSION` (via `make sync`) |
 
 Bump all at once: `make bump VERSION=0.2.0`
 
