@@ -158,7 +158,7 @@ The template repo already created the project structure. Verify it's intact.
 **Python** — check that these exist:
 - `src/mcp_<name>/server.py`, `api_client.py`, `api_models.py`, `__init__.py`
 - `tests/`
-- `manifest.json`, `pyproject.toml`, `Makefile`
+- `manifest.json`, `server.json`, `pyproject.toml`, `Makefile`
 - `.github/workflows/ci.yml`, `.github/workflows/build-bundle.yml`
 
 **TypeScript** — check that these exist:
@@ -191,6 +191,7 @@ Implement in this order:
 1. **`api_models.py`** — Pydantic models for API responses. Use `Field(alias=...)` for camelCase mapping.
 2. **`api_client.py`** — Async aiohttp client. Set BASE_URL, add one method per endpoint.
 3. **`server.py`** — FastMCP server with `@mcp.tool()` decorators. Global client with lazy init. Dual transport (http_app + stdio).
+4. **`manifest.json`** + **`server.json`** — Fill all placeholder fields. See `references/CONVENTIONS.md` for the full `server.json` schema.
 
 See `references/PATTERNS.md` → "Python Server Patterns" for complete code examples.
 

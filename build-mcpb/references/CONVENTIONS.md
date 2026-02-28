@@ -193,9 +193,9 @@ Required format for `mpak config set` compatibility:
 - Use `sensitive: true` for secrets (not `secret`)
 - Reference via `${user_config.<field_name>}` in env mapping
 
-## server.json (TypeScript only)
+## server.json
 
-TypeScript servers require a `server.json` for registry metadata:
+All servers (Python and TypeScript) require a `server.json` for registry metadata. This is what mpak uses to ingest and announce bundles.
 
 ```json
 {
@@ -204,11 +204,16 @@ TypeScript servers require a `server.json` for registry metadata:
   "title": "<Display Name>",
   "description": "...",
   "version": "0.1.0",
+  "websiteUrl": "https://nimblebrain.ai",
+  "repository": {
+    "url": "https://github.com/NimbleBrainInc/mcp-<name>",
+    "source": "github"
+  },
   "packages": [
     {
-      "registryType": "npm",
-      "registryBaseUrl": "https://registry.npmjs.org",
-      "identifier": "@nimblebraininc/<name>",
+      "registryType": "<see table below>",
+      "registryBaseUrl": "<see table below>",
+      "identifier": "<see table below>",
       "version": "0.1.0",
       "transport": { "type": "stdio" },
       "environmentVariables": [
@@ -222,6 +227,10 @@ TypeScript servers require a `server.json` for registry metadata:
     }
   ],
   "_meta": {
+    "io.modelcontextprotocol.registry/publisher-provided": {
+      "tool": "mcpb",
+      "version": "0.4"
+    },
     "org.mpaktrust": {
       "mtf_version": "0.1",
       "permissions": {
@@ -233,6 +242,14 @@ TypeScript servers require a `server.json` for registry metadata:
   }
 }
 ```
+
+**Package fields by language:**
+
+| Field | Python | TypeScript |
+|-------|--------|------------|
+| `registryType` | `pypi` | `npm` |
+| `registryBaseUrl` | `https://pypi.org` | `https://registry.npmjs.org` |
+| `identifier` | `mcp-<name>` | `@nimblebraininc/<name>` |
 
 ## Entry Points
 
