@@ -150,6 +150,9 @@ Before closing out, offer a preview:
 
 If they want a preview → draw from `references/PIPELINE.md`, then prompt them to type `/build-mcpb`.
 
+When explaining the pipeline end state, be clear about the goal:
+"After building, you'll commit to `main`, cut a GitHub Release, and your bundle will be automatically built and published to the mpak registry. There's no PR step — you own the repo."
+
 When ready: "Type `/build-mcpb` here to kick off the build — no need to open a new session. If you'd prefer a fresh context window, open a new Claude Code session from inside `mcp-<name>` and type `/build-mcpb` there."
 
 ### Path B: Filing an Issue
@@ -172,8 +175,14 @@ Ask these questions one at a time, not all at once:
 
 From their answers, suggest 2–3 concrete skill workflows (e.g. "post a message and wait for a reply", "summarize unread threads"). If they're unsure, offer examples based on the service type.
 
-Once you have everything, show them the issue body for review before filing:
+Once you have everything, show them the issue body for review before filing.
 
+First, ensure the label exists (it may not on a fresh org):
+```bash
+gh label create integration --repo NimbleBrainInc/.github 2>/dev/null || true
+```
+
+Then create the issue:
 ```bash
 gh issue create --repo NimbleBrainInc/.github \
   --title "New MCP Server: <service name>" \

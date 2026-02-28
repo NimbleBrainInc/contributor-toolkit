@@ -1,6 +1,6 @@
 ---
 name: build-mcpb
-description: Build MCP servers end-to-end. Scaffolds a production-ready Python or TypeScript server from API documentation, implements tools, validates the MCPB bundle, and authors companion skills. Covers the full lifecycle from API analysis to PR-ready deliverable. Use when building a new MCP server, wrapping an API, or creating an integration. Triggers include "build an MCP server", "create a server for X", "/build-mcpb".
+description: Build MCP servers end-to-end. Scaffolds a production-ready Python or TypeScript server from API documentation, implements tools, validates the MCPB bundle, authors companion skills, and guides release to the mpak registry. Covers the full lifecycle from API analysis to published bundle. Use when building a new MCP server, wrapping an API, or creating an integration. Triggers include "build an MCP server", "create a server for X", "/build-mcpb".
 license: Apache-2.0
 compatibility: Python 3.13+, uv, ruff, ty OR Node.js 24+, npm. Docker, mpak CLI. Claude Code with filesystem access.
 allowed-tools: Read Write Bash Glob Grep WebFetch AskUserQuestion
@@ -47,7 +47,7 @@ metadata:
 
 # Build MCPB
 
-Build MCP servers end-to-end: scaffold from API docs, implement tools, validate the bundle, and author companion skills. Supports Python (FastMCP) and TypeScript (@modelcontextprotocol/sdk).
+Build MCP servers end-to-end: scaffold from API docs, implement tools, validate the bundle, author companion skills, and release to the mpak registry. Supports Python (FastMCP) and TypeScript (@modelcontextprotocol/sdk).
 
 ## Quick Start
 
@@ -67,7 +67,7 @@ Phase 3: Implement        Write tool logic, models, client
 Phase 4: Verify           Lint, typecheck, test
 Phase 5: Validate Bundle  Manifest, build, bundle, MTF scan, runtime
 Phase 6: Author Skills    Generate 2-3 companion skills
-Phase 7: Prepare PR       Assemble PR with server + skills
+Phase 7: Release          Commit, push, cut release, verify bundle
 ```
 
 ## Phase 0: Detect
@@ -274,7 +274,7 @@ This file is required for package claiming on the registry. The `name` must matc
 
 ### 5c: Bundle Inspection
 
-- **Python:** `mcpb build` produces clean bundle
+- **Python:** `make bundle` (vendors deps into `deps/`, packs with `npx @anthropic-ai/mcpb pack`)
 - **TypeScript:** `make bundle` (builds, prunes dev deps, packs)
 - Both: no accidental large files (.git, node_modules), manifest.json present in bundle root
 
@@ -286,19 +286,19 @@ mpak-scanner scan .
 
 ### 5e: Runtime Validation
 
+The MCP protocol requires an initialize handshake before any method calls. Send `initialize`, then `notifications/initialized`, then `tools/list`:
+
 **Python:**
 ```bash
-echo '{"jsonrpc":"2.0","method":"tools/list","id":1}' | \
-  uv run python -m mcp_<name>.server
+printf '{"jsonrpc":"2.0","method":"initialize","id":1,"params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"test","version":"0.1.0"}}}\n{"jsonrpc":"2.0","method":"notifications/initialized"}\n{"jsonrpc":"2.0","method":"tools/list","id":2}\n' | uv run python -m mcp_<name>.server 2>/dev/null
 ```
 
 **TypeScript:**
 ```bash
-echo '{"jsonrpc":"2.0","method":"tools/list","id":1}' | \
-  node build/index.js --stdio
+printf '{"jsonrpc":"2.0","method":"initialize","id":1,"params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"test","version":"0.1.0"}}}\n{"jsonrpc":"2.0","method":"notifications/initialized"}\n{"jsonrpc":"2.0","method":"tools/list","id":2}\n' | node build/index.js --stdio 2>/dev/null
 ```
 
-Both: server responds with valid JSON-RPC `tools/list` result. No garbage on stdout (logs go to stderr).
+Both: server responds with valid JSON-RPC `initialize` result followed by `tools/list` result. No garbage on stdout (logs go to stderr).
 
 ## Phase 6: Author Companion Skills
 
@@ -350,32 +350,48 @@ mpak skill pack ./skills/<skill-name>
 - [ ] Example included
 - [ ] Declares server dependency in compatibility
 
-## Phase 7: Prepare PR
+## Phase 7: Release
 
-**PR title:** `Add <server-name> MCP server + companion skills`
+The contributor created and owns the repo — there is no PR to open. The goal is: code on `main` → GitHub Release → `build-bundle.yml` triggers → bundles built and published to the mpak registry.
 
-**PR body:**
-```markdown
-## Summary
-- New MCP server for <API name> with <N> tools
-- <N> companion skills for common workflows
+### 7a: Commit to main
 
-## Server Tools
-- `tool_1` - description
-- ...
+```bash
+git add -A && git commit -m "Add <service> MCP server + companion skills"
+```
 
-## Skills
-- `skill-1` - description
-- ...
+### 7b: Push
 
-## Checklist
-- [ ] 5+ tools implemented
-- [ ] manifest.json valid (v0.4)
-- [ ] Tests passing
-- [ ] CI passing (lint, format, typecheck, test, bundle, scan)
-- [ ] Scanner passes (no critical/high findings)
-- [ ] 2+ companion skills with proper frontmatter
-- [ ] All skills pass `mpak skill validate`
+Ask the user to push their changes:
+
+"Push your changes to GitHub: `git push origin main`"
+
+Do not push on the user's behalf.
+
+### 7c: Verify CI
+
+Wait for CI to pass. Direct the user to the Actions tab:
+
+"Check your repo's Actions tab to confirm CI passes: `https://github.com/NimbleBrainInc/mcp-<name>/actions`"
+
+### 7d: Cut a release
+
+Guide the user to create a GitHub release:
+
+```bash
+gh release create v0.1.0 --title "v0.1.0" --generate-notes
+```
+
+### 7e: Verify bundle build
+
+"Check your Actions tab — you should see the **Build MCPB Bundle** workflow running on 3 runners (linux-amd64, linux-arm64, darwin-arm64)."
+
+### 7f: Confirm publication
+
+Once the build completes, confirm the bundle is announced on the registry:
+
+```bash
+mpak search <name>
 ```
 
 ## References
