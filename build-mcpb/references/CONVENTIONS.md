@@ -193,9 +193,9 @@ Required format for `mpak config set` compatibility:
 - Use `sensitive: true` for secrets (not `secret`)
 - Reference via `${user_config.<field_name>}` in env mapping
 
-## server.json (TypeScript only)
+## server.json
 
-TypeScript servers require a `server.json` for registry metadata:
+All servers (Python and TypeScript) require a `server.json` for registry metadata. This is what mpak uses to ingest and announce bundles.
 
 ```json
 {
@@ -204,11 +204,19 @@ TypeScript servers require a `server.json` for registry metadata:
   "title": "<Display Name>",
   "description": "...",
   "version": "0.1.0",
+  "websiteUrl": "https://nimblebrain.ai",
+  "repository": {
+    "url": "https://github.com/NimbleBrainInc/mcp-<name>",
+    "source": "github"
+  },
   "packages": [
     {
-      "registryType": "npm",
-      "registryBaseUrl": "https://registry.npmjs.org",
-      "identifier": "@nimblebraininc/<name>",
+      "registryType": [
+        "mcpb",
+        "<see table below>"
+      ],
+      "registryBaseUrl": "<see table below>",
+      "identifier": "<see table below>",
       "version": "0.1.0",
       "transport": { "type": "stdio" },
       "environmentVariables": [
@@ -222,6 +230,10 @@ TypeScript servers require a `server.json` for registry metadata:
     }
   ],
   "_meta": {
+    "io.modelcontextprotocol.registry/publisher-provided": {
+      "tool": "mcpb",
+      "version": "0.4"
+    },
     "org.mpaktrust": {
       "mtf_version": "0.1",
       "permissions": {
@@ -233,6 +245,14 @@ TypeScript servers require a `server.json` for registry metadata:
   }
 }
 ```
+
+**Package fields by language:**
+
+| Field | Python | TypeScript |
+|-------|--------|------------|
+| `registryType[1]` | `pypi` | `npm` |
+| `registryBaseUrl` | `https://pypi.org` | `https://registry.npmjs.org` |
+| `identifier` | `mcp-<name>` | `@nimblebraininc/<name>` |
 
 ## Entry Points
 
@@ -293,9 +313,9 @@ Without this, `uv sync` won't install the package and module imports silently fa
     "build": "tsc",
     "start": "node build/index.js --stdio",
     "dev": "tsx src/index.ts --stdio",
-    "lint": "eslint src/ tests/",
-    "format": "prettier --write src/ tests/",
-    "format:check": "prettier --check src/ tests/",
+    "lint": "biome check src/ tests/",
+    "format": "biome format --write src/ tests/",
+    "format:check": "biome format src/ tests/",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "check": "npm run format:check && npm run lint && npm run typecheck && npm run test"
@@ -351,8 +371,8 @@ gh release create v0.2.0 --title "v0.2.0" --notes "- changelog"
 | Aspect | Python | TypeScript |
 |--------|--------|------------|
 | Package manager | uv | npm |
-| Linting | ruff | ESLint |
-| Formatting | ruff | Prettier |
+| Linting | ruff | Biome |
+| Formatting | ruff | Biome |
 | Type checking | ty | tsc --noEmit |
 | Testing | pytest + pytest-asyncio | Vitest |
 | Dev runner | — | tsx |
