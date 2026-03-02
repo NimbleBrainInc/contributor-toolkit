@@ -4,40 +4,177 @@
 
 Package names MUST be scoped: `@nimblebraininc/<name>`
 
-Registry rejects other formats (e.g., `ai.nimbletools/name`).
+Name must match the registry regex: `/^@[a-z0-9][a-z0-9-]{0,38}\/[a-z0-9][a-z0-9-]{0,213}$/`
 
-## Python Server Manifest
+Registry rejects other formats (e.g., `ai.nimbletools/name`, uppercase, underscores in name).
 
-Servers using src-layout MUST use module execution:
+## Naming
+
+| Aspect | Python | TypeScript |
+|--------|--------|------------|
+| Package scope | `@nimblebraininc/<name>` | `@nimblebraininc/<name>` |
+| Module / package | `mcp_<name>` (underscores) | `mcp-<name>` (hyphens) |
+| Source directory | `src/mcp_<name>/` | `src/` |
+| Environment variable | `<NAME>_API_KEY` | `<NAME>_API_KEY` |
+
+## Manifest (MCPB v0.4)
+
+### Required vs Optional Fields
+
+| Field | Required | Notes |
+|-------|----------|-------|
+| `name` | **Yes** | Must match `/^@[a-z0-9][a-z0-9-]{0,38}\/[a-z0-9][a-z0-9-]{0,213}$/` |
+| `version` | **Yes** | Valid semver (e.g., `0.1.0`) |
+| `description` | **Yes** | Short description |
+| `server.type` | **Yes** | `python`, `node`, or `binary` |
+| `server.mcp_config` | **Yes** | Must have `command` (string) and `args` (string array) |
+| `server.entry_point` | **Yes** | Module path (Python) or `build/index.js` (TypeScript) |
+| `manifest_version` | Recommended | `"0.4"` |
+| `author` | Recommended | `{ "name": "..." }` |
+| `user_config` | If server needs config | Each entry needs `type`; use `sensitive: true` for secrets |
+| `tools` | Recommended | Array of `{ "name": "...", "description": "..." }` |
+| `display_name` | Optional | Human-readable name |
+| `long_description` | Optional | Extended description |
+| `license` | Optional | SPDX identifier |
+| `keywords` | Optional | Array of strings |
+| `repository` | Optional | `{ "type": "git", "url": "..." }` |
+| `compatibility` | Optional | Platforms, runtimes |
+| `_meta` | Recommended | MTF permissions block |
+
+### Variable Resolution
+
+- `${user_config.<field>}` — resolves to the user's configured value for that field (used in `server.mcp_config.env`)
+- `${__dirname}` — resolves to the bundle's install directory at runtime (TypeScript only; never use for Python)
+
+### mpak.json
+
+Required for package claiming on the mpak registry. Must exist in the repo root:
+
 ```json
 {
+  "name": "@nimblebraininc/<name>",
+  "maintainers": ["<github-username>"]
+}
+```
+
+The `name` field must exactly match the `name` in `manifest.json`.
+
+### Python
+
+```json
+{
+  "manifest_version": "0.4",
+  "name": "@nimblebraininc/<name>",
+  "version": "0.1.0",
+  "description": "...",
+  "author": { "name": "NimbleBrain Inc" },
+  "user_config": {
+    "api_key": {
+      "type": "string",
+      "title": "API Key",
+      "description": "Your API key from...",
+      "sensitive": true,
+      "required": true
+    }
+  },
   "server": {
     "type": "python",
-    "entry_point": "mcp_module.server",
+    "entry_point": "mcp_<name>.server",
     "mcp_config": {
       "command": "python",
-      "args": ["-m", "mcp_module.server"]
+      "args": ["-m", "mcp_<name>.server"],
+      "env": {
+        "<NAME>_API_KEY": "${user_config.api_key}"
+      }
+    }
+  },
+  "tools": [
+    { "name": "tool_name", "description": "What it does" }
+  ],
+  "_meta": {
+    "org.mpaktrust": {
+      "mtf_version": "0.1",
+      "permissions": {
+        "network": "outbound",
+        "filesystem": "none",
+        "subprocess": "none",
+        "environment": "read",
+        "native": "none"
+      }
     }
   }
 }
 ```
 
-Never use file paths (`${__dirname}/...`) for Python, as it breaks after bundling.
+Never use file paths (`${__dirname}/...`) for Python — breaks after bundling.
 
-Python servers with src-layout MUST have a `[build-system]` in `pyproject.toml`:
-```toml
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+`server.mcp_config` is **required** — the registry uses it to generate the MCP client configuration. Both `command` and `args` must be present.
 
-[tool.hatch.build.targets.wheel]
-packages = ["src/mcp_<name>"]
+### TypeScript
+
+```json
+{
+  "manifest_version": "0.4",
+  "name": "@nimblebraininc/<name>",
+  "display_name": "<Display Name>",
+  "version": "0.1.0",
+  "description": "...",
+  "long_description": "...",
+  "author": { "name": "NimbleBrain Inc", "email": "hello@nimblebrain.ai" },
+  "license": "MIT",
+  "keywords": [],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/NimbleBrainInc/mcp-<name>"
+  },
+  "compatibility": {
+    "platforms": ["darwin", "linux", "win32"],
+    "runtimes": { "node": ">=24.0.0" }
+  },
+  "user_config": {
+    "api_key": {
+      "type": "string",
+      "title": "<Service> API Key",
+      "description": "Your API key from...",
+      "sensitive": true,
+      "required": true
+    }
+  },
+  "server": {
+    "type": "node",
+    "entry_point": "build/index.js",
+    "mcp_config": {
+      "command": "node",
+      "args": ["${__dirname}/build/index.js", "--stdio"],
+      "env": {
+        "<NAME>_API_KEY": "${user_config.api_key}"
+      }
+    }
+  },
+  "tools": [
+    { "name": "tool_name", "description": "What it does" }
+  ],
+  "_meta": {
+    "org.mpaktrust": {
+      "mtf_version": "0.1",
+      "permissions": {
+        "network": "outbound",
+        "filesystem": "none",
+        "subprocess": "none",
+        "environment": "read",
+        "native": "none"
+      }
+    }
+  }
+}
 ```
-Without this, `uv sync` won't install the package and module imports silently fail.
+
+TypeScript uses `${__dirname}/build/index.js` — this resolves correctly after bundling.
 
 ## user_config (API Keys)
 
 Required format for `mpak config set` compatibility:
+
 ```json
 {
   "user_config": {
@@ -48,25 +185,58 @@ Required format for `mpak config set` compatibility:
       "sensitive": true,
       "required": true
     }
-  },
-  "server": {
-    "mcp_config": {
-      "env": {
-        "SERVICE_API_KEY": "${user_config.api_key}"
+  }
+}
+```
+
+- Field names: lowercase with underscores (`api_key`, `database_uri`)
+- Use `sensitive: true` for secrets (not `secret`)
+- Reference via `${user_config.<field_name>}` in env mapping
+
+## server.json (TypeScript only)
+
+TypeScript servers require a `server.json` for registry metadata:
+
+```json
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.nimblebrain/<name>",
+  "title": "<Display Name>",
+  "description": "...",
+  "version": "0.1.0",
+  "packages": [
+    {
+      "registryType": "npm",
+      "registryBaseUrl": "https://registry.npmjs.org",
+      "identifier": "@nimblebraininc/<name>",
+      "version": "0.1.0",
+      "transport": { "type": "stdio" },
+      "environmentVariables": [
+        {
+          "name": "<NAME>_API_KEY",
+          "description": "...",
+          "isRequired": true,
+          "isSecret": true
+        }
+      ]
+    }
+  ],
+  "_meta": {
+    "org.mpaktrust": {
+      "mtf_version": "0.1",
+      "permissions": {
+        "network": ["<api-hostname>"],
+        "filesystem": "none",
+        "subprocess": "none"
       }
     }
   }
 }
 ```
 
-Key points:
-- Field names: lowercase with underscores (`api_key`, `database_uri`)
-- Use `sensitive: true` for secrets (not `secret`)
-- Reference via `${user_config.<field_name>}` in env mapping
+## Entry Points
 
-## Python Server Entry Points
-
-Python servers need two entrypoints for dual transport:
+### Python — dual transport
 
 ```python
 # ASGI entrypoint (container deployment)
@@ -81,86 +251,138 @@ if __name__ == "__main__":
 |---------|---------|------------|
 | Containers | `uvicorn module.server:app` | `app = mcp.http_app()` |
 | mpak / Claude Desktop | `python -m module.server` | `__main__` block |
-| Local dev (HTTP) | `uvicorn module.server:app` | `app = mcp.http_app()` |
-| Local dev (stdio) | `python -m module.server` | `__main__` block |
 
-Both entrypoints are required. The `app` object must exist at module level for uvicorn to import it.
+Both entrypoints are required. The `app` object must exist at module level.
 
-## Build Workflow Base
+### TypeScript — stdio only
 
-Uses mcpb-pack v2 with release trigger:
-```yaml
-on:
-  release:
-    types: [published]
-
-permissions:
-  contents: write
-  id-token: write
-
-jobs:
-  build:
-    strategy:
-      matrix:
-        include:
-          - os: linux
-            arch: amd64
-            runner: ubuntu-latest
-          - os: linux
-            arch: arm64
-            runner: ubuntu-24.04-arm
-          - os: darwin
-            arch: arm64
-            runner: macos-latest
-    runs-on: ${{ matrix.runner }}
+```typescript
+const transport = new StdioServerTransport();
+await server.connect(transport);
 ```
+
+| Context | Command |
+|---------|---------|
+| mpak / Claude Desktop | `node build/index.js --stdio` |
+| Local dev | `npm run dev` (uses tsx) |
+
+## Build System
+
+### Python
+
+`pyproject.toml` with hatchling:
+
+```toml
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/mcp_<name>"]
+```
+
+Without this, `uv sync` won't install the package and module imports silently fail.
+
+### TypeScript
+
+`tsconfig.json` with `outDir: "build"`. Key npm scripts:
+
+```json
+{
+  "scripts": {
+    "build": "tsc",
+    "start": "node build/index.js --stdio",
+    "dev": "tsx src/index.ts --stdio",
+    "lint": "eslint src/ tests/",
+    "format": "prettier --write src/ tests/",
+    "format:check": "prettier --check src/ tests/",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "check": "npm run format:check && npm run lint && npm run typecheck && npm run test"
+  }
+}
+```
+
+Entry point is `build/` not `dist/`.
 
 ## Version Management
 
-Version lives in four files that MUST stay in sync:
+### Python — 3 files must stay in sync
 
-| File | Field | Purpose |
-|------|-------|---------|
-| `manifest.json` | `version` | MCPB bundle version (what mpak sees) |
-| `server.json` | `version` | NimbleBrain registry metadata |
-| `pyproject.toml` | `version` | Python package version |
-| `src/<package>/__init__.py` | `__version__` | Runtime version |
+| File | Field |
+|------|-------|
+| `manifest.json` | `version` |
+| `pyproject.toml` | `version` |
+| `src/<package>/__init__.py` | `__version__` |
 
 Bump all at once: `make bump VERSION=0.2.0`
 
+### TypeScript — manifest.json is single source of truth
+
+| File | Synced by |
+|------|-----------|
+| `manifest.json` | Edit directly |
+| `package.json` | `make sync` |
+| `server.json` | `make sync` |
+| `src/constants.ts` | `make sync` |
+
+Bump: `make bump VERSION=0.2.0` (updates manifest, then syncs).
+
+Never edit `package.json`, `server.json`, or `src/constants.ts` versions manually.
+
 ## Versioning Policy
 
-All NimbleBrain MCP servers follow Semantic Versioning 2.0.0 with a deliberate choice to remain in the v0.x.y range until the MCP ecosystem stabilizes.
+All servers stay at v0.x.y until the MCP ecosystem stabilizes.
 
-In v0.x.y:
-- **x** (minor): Incremented for any notable change, including breaking changes to tool definitions
-- **y** (patch): Incremented for bug fixes and minor improvements that don't change the tool surface
-
-A server may graduate to v1.0.0 when ALL of the following are true:
-1. The MCP protocol has reached 1.0 or demonstrated long-term stability
-2. The server's tool surface has been stable for 3+ months
-3. There is meaningful external adoption
-4. The maintainers are confident the tool definitions are "correct"
+- **x** (minor): Notable changes, including breaking changes to tool definitions
+- **y** (patch): Bug fixes and minor improvements
 
 ## Release Process
 
 ```bash
-# 1. Bump version
 make bump VERSION=0.2.0
-
-# 2. Commit the version bump
 git add -A && git commit -m "Bump version to 0.2.0"
-
-# 3. Tag and push
 git tag v0.2.0 && git push origin main v0.2.0
-
-# 4. Create GitHub release (triggers CI bundle build)
 gh release create v0.2.0 --title "v0.2.0" --notes "- changelog"
 ```
 
 ## Tooling
 
-- **Package manager**: uv (not pip)
-- **Linting/formatting**: ruff (not flake8, black, isort)
-- **Type checking**: ty (not mypy, pyright)
-- **Testing**: pytest with pytest-asyncio
+| Aspect | Python | TypeScript |
+|--------|--------|------------|
+| Package manager | uv | npm |
+| Linting | ruff | ESLint |
+| Formatting | ruff | Prettier |
+| Type checking | ty | tsc --noEmit |
+| Testing | pytest + pytest-asyncio | Vitest |
+| Dev runner | — | tsx |
+
+### Dependency versions (TypeScript)
+
+Use exact versions (no `^` or `~`) in `package.json`. Range specifiers are L2 MTF security findings.
+
+### .js imports (TypeScript)
+
+Node ESM requires the `.js` extension in imports: `import ... from "./foo.js"`
+
+## Build Workflow (CI)
+
+Uses mcpb-pack v2 with release trigger. Both languages use the same matrix:
+
+```yaml
+strategy:
+  matrix:
+    include:
+      - os: linux
+        arch: amd64
+        runner: ubuntu-latest
+      - os: linux
+        arch: arm64
+        runner: ubuntu-24.04-arm
+      - os: darwin
+        arch: arm64
+        runner: macos-latest
+```
+
+Python CI: `uv sync --dev` → ruff format --check → ruff check → ty check → pytest
+TypeScript CI: `npm ci` → format:check → lint → typecheck → test → build → bundle test
