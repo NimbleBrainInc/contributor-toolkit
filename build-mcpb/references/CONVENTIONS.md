@@ -211,7 +211,10 @@ All servers (Python and TypeScript) require a `server.json` for registry metadat
   },
   "packages": [
     {
-      "registryType": "<see table below>",
+      "registryType": [
+        "mcpb",
+        "<see table below>"
+      ],
       "registryBaseUrl": "<see table below>",
       "identifier": "<see table below>",
       "version": "0.1.0",
@@ -247,7 +250,7 @@ All servers (Python and TypeScript) require a `server.json` for registry metadat
 
 | Field | Python | TypeScript |
 |-------|--------|------------|
-| `registryType` | `pypi` | `npm` |
+| `registryType[1]` | `pypi` | `npm` |
 | `registryBaseUrl` | `https://pypi.org` | `https://registry.npmjs.org` |
 | `identifier` | `mcp-<name>` | `@nimblebraininc/<name>` |
 
