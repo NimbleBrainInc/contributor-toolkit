@@ -139,7 +139,7 @@ gh repo create NimbleBrainInc/mcp-<name> \
   --template NimbleBrainInc/mcp-server-template-typescript --public --clone
 ```
 
-**Immediately after cloning, `cd` into `mcp-<name>` and replace all template placeholders with the actual service name.** Do not move on until this is done — downstream steps (including `/build-mcpb`) assume the project already has correct names everywhere.
+**Immediately after cloning, `cd` into `mcp-<name>` and replace all template placeholders with the actual service name.** Do not move on until this is done — downstream steps (including `/build-mcpb`) assume the project already has correct names everywhere. Also set `repo_path` to the absolute path of `mcp-<name>` for the handoff contract.
 
 Derive these values from `<name>` (the service name the user chose):
 
@@ -191,15 +191,27 @@ Ask the user to have their API key for the target service ready. They'll need it
 
 **Step 5: Hand off**
 
-Before closing out, offer a preview:
+Before closing out, establish the handoff contract for `/build-mcpb`:
+- `service`: `<name>`
+- `language`: Python or Node/TypeScript
+- `repo_path`: absolute path to `mcp-<name>`
+- `repo`: placeholders are fully replaced
+- `api_key_ready`: contributor confirms they have the target API key ready
+
+Before prompting `/build-mcpb`, enforce directory state:
+- if current directory is not `repo_path`, run `cd <repo_path>`
+- verify `pwd` is `repo_path`
+- verify `manifest.json` exists in the current directory
+
+Then offer a preview:
 "Your environment is set up and the repo is ready. Want a quick overview of what the build pipeline covers before you start, or ready to type `/build-mcpb` now?"
 
 If they want a preview → draw from `references/PIPELINE.md`, then prompt them to type `/build-mcpb`.
 
 When explaining the pipeline end state, be clear about the goal:
-"After building, you'll commit to `main`, cut a GitHub Release, and your bundle will be automatically built and published to the mpak registry. There's no PR step — you own the repo."
+"After building, you'll commit to `main`, cut a GitHub Release, and your bundle will be automatically built and published to the mpak registry."
 
-When ready: "Type `/build-mcpb` here to kick off the build — no need to open a new session. If you'd prefer a fresh context window, open a new Claude Code session from inside `mcp-<name>` and type `/build-mcpb` there."
+When ready: "Type `/build-mcpb` in this same session now so we continue with full context."
 
 ### Path B: Filing an Issue
 

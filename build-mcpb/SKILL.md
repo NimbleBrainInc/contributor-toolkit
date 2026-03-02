@@ -2,7 +2,7 @@
 name: build-mcpb
 description: Build MCP servers end-to-end. Scaffolds a production-ready Python or TypeScript server from API documentation, implements tools, validates the MCPB bundle, authors companion skills, and guides release to the mpak registry. Covers the full lifecycle from API analysis to published bundle. Use when building a new MCP server, wrapping an API, or creating an integration. Triggers include "build an MCP server", "create a server for X", "/build-mcpb".
 license: Apache-2.0
-compatibility: Python 3.13+, uv, ruff, ty OR Node.js 24+, npm. Docker, mpak CLI. Claude Code with filesystem access.
+compatibility: Python 3.13+, uv, ruff, ty OR Node.js 24+, npm. Docker, mpak CLI. Claude Code or Codex with filesystem access.
 allowed-tools: Read Write Bash Glob Grep WebFetch AskUserQuestion
 metadata:
   tags:
@@ -35,6 +35,7 @@ metadata:
   version: "0.1.0"
   surfaces:
     - claude-code
+    - codex
   author:
     name: NimbleBrain
     url: https://nimblebrain.ai
@@ -74,7 +75,24 @@ Phase 7: Release          Commit, push, cut release, verify bundle
 
 Auto-detect the project language and service name.
 
-### 0a: Prerequisites (cold-start guard)
+### 0a: Context-aware start (handoff-first)
+
+If invoked immediately after `/nimblebrain-contributor` in the same session, assume this handoff contract may already be established:
+- `service` selected
+- `language` selected
+- `repo_path` points to the local `mcp-<name>` directory
+- `repo` created from NimbleBrain template and placeholders replaced
+- `api_key_ready` confirmed by contributor
+
+In this case, enforce working directory first:
+- if current directory is not `repo_path` and `repo_path` is known, `cd` to `repo_path`
+- verify `manifest.json` exists in the current directory
+
+Then do a fast verification pass (manifest + key files) and continue. Do not re-run a full onboarding interview or repeat already-confirmed questions unless values are missing or inconsistent.
+
+If any carried value conflicts with the filesystem state, surface the mismatch and ask for correction before proceeding.
+
+### 0b: Prerequisites (cold-start guard)
 
 If the contributor arrived directly (not via `/nimblebrain-contributor`), verify the basics before proceeding:
 
@@ -85,7 +103,7 @@ If the contributor arrived directly (not via `/nimblebrain-contributor`), verify
 
 If any check fails, tell the contributor what's missing and point them to `/nimblebrain-contributor` or `DEV_SETUP.md` for setup instructions. Don't block on optional tools (e.g., mpak-scanner) — just note they're unavailable and skip the phases that need them.
 
-### 0b: Language
+### 0c: Language
 
 Check the current working directory:
 - `pyproject.toml` exists → **Python**
@@ -93,13 +111,17 @@ Check the current working directory:
 - Neither → ask the user which language they're using
 - Both → ask the user (unusual — clarify which is primary)
 
-### 0c: Service Name
+If handoff already provided `language` and filesystem agrees, keep it without re-asking.
+
+### 0d: Service Name
 
 1. If `manifest.json` exists, parse the `name` field and strip the scope: `@nimblebraininc/<name>` → `<name>`
 2. Otherwise, derive from the directory name: strip `mcp-` prefix (e.g., `mcp-stripe` → `stripe`)
 3. If neither works, ask the user
 
-### 0d: Naming Variables
+If handoff already provided `service` and filesystem agrees, keep it without re-asking.
+
+### 0e: Naming Variables
 
 Derive all naming from the service name:
 
@@ -110,9 +132,9 @@ Derive all naming from the service name:
 | Source directory | `src/mcp_<name>/` | `src/` |
 | Env var | `<NAME>_API_KEY` | `<NAME>_API_KEY` |
 
-### 0e: Confirm
+### 0f: Confirm
 
-Show detection results and ask the user to confirm before proceeding:
+Show detection results and ask the user to confirm before proceeding. Skip this prompt only when all values came from a consistent same-session handoff and no mismatch was found.
 
 ```
 => Detected:
