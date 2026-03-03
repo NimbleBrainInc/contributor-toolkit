@@ -56,12 +56,12 @@ Build MCP servers end-to-end: scaffold from API docs, implement tools, validate 
 > /build-mcpb
 ```
 
-The skill auto-detects language and service name from the current directory.
+The skill bootstraps everything needed: language, service name, repo creation, template setup — then proceeds through the build pipeline.
 
 ## Pipeline Overview
 
 ```
-Phase 0: Detect           Auto-detect language + service name from repo
+Phase 0: Bootstrap        Language, service name, repo creation, template setup
 Phase 1: API Analysis     Fetch docs, identify resources, propose tools
 Phase 2: Scaffold         Verify project structure from template
 Phase 3: Implement        Write tool logic, models, client
@@ -71,59 +71,56 @@ Phase 6: Author Skills    Generate 2-3 companion skills
 Phase 7: Release          Commit, push, cut release, verify bundle
 ```
 
-## Phase 0: Detect
+## Phase 0: Bootstrap
 
-Auto-detect the project language and service name.
+Set up language, service name, repo, and template customization — everything needed before the build pipeline begins.
 
-### 0a: Context-aware start (handoff-first)
+### 0a: Entry Routing
 
-If invoked immediately after `/nimblebrain-contributor` in the same session, assume this handoff contract may already be established:
-- `service` selected
-- `language` selected
-- `repo_path` points to the local `mcp-<name>` directory
-- `repo` created from NimbleBrain template and placeholders replaced
-- `api_key_ready` confirmed by contributor
+Determine whether this is a **warm start** or **cold start**:
 
-In this case, enforce working directory first:
-- if current directory is not `repo_path` and `repo_path` is known, `cd` to `repo_path`
-- verify `manifest.json` exists in the current directory
+- **Warm start:** Invoked from `/nimblebrain-contributor` (or after it) in the same session. The conversation already contains a service name, language choice, and the environment has been checked. Heuristic: if the conversation already contains a service name from prior nimblebrain-contributor interaction, treat as warm.
+- **Cold start:** Standalone `/build-mcpb` invocation with no prior context. Need to establish everything from scratch.
 
-Then do a fast verification pass (manifest + key files) and continue. Do not re-run a full onboarding interview or repeat already-confirmed questions unless values are missing or inconsistent.
+### 0b: Prerequisites (cold-start only)
 
-If any carried value conflicts with the filesystem state, surface the mismatch and ask for correction before proceeding.
-
-### 0b: Prerequisites (cold-start guard)
-
-If the contributor arrived directly (not via `/nimblebrain-contributor`), verify the basics before proceeding:
+If cold start, verify the basics before proceeding:
 
 1. **gh CLI** — `gh auth status` succeeds
 2. **Language toolchain** — Python: `uv --version`, `ruff --version`, `ty --version`; TypeScript: `node --version`, `npm --version`
 3. **mpak CLI** — `mpak --version` succeeds
-4. **Repo structure** — `manifest.json` exists and its `name` starts with `@nimblebraininc/` (confirms it was created from a NimbleBrain template)
 
-If any check fails, tell the contributor what's missing and point them to `/nimblebrain-contributor` or `DEV_SETUP.md` for setup instructions. Don't block on optional tools (e.g., mpak-scanner) — just note they're unavailable and skip the phases that need them.
+If any check fails, tell the contributor what's missing and point them to `~/.claude/skills/nimblebrain-contributor/references/DEV_SETUP.md` for setup instructions. Don't block on optional tools (e.g., mpak-scanner) — just note they're unavailable and skip the phases that need them.
 
 ### 0c: Language
 
-Check the current working directory:
-- `pyproject.toml` exists → **Python**
-- `package.json` exists → **TypeScript**
-- Neither → ask the user which language they're using
-- Both → ask the user (unusual — clarify which is primary)
-
-If handoff already provided `language` and filesystem agrees, keep it without re-asking.
+- **Warm start:** Use the language from the conversation context.
+- **Cold start:** Check the current working directory:
+  - `pyproject.toml` exists → **Python**
+  - `package.json` exists → **TypeScript**
+  - Neither → ask the user which language they're using
+  - Both → ask the user (unusual — clarify which is primary)
 
 ### 0d: Service Name
 
-1. If `manifest.json` exists, parse the `name` field and strip the scope: `@nimblebraininc/<name>` → `<name>`
-2. Otherwise, derive from the directory name: strip `mcp-` prefix (e.g., `mcp-stripe` → `stripe`)
-3. If neither works, ask the user
-
-If handoff already provided `service` and filesystem agrees, keep it without re-asking.
+- **Warm start:** Use the service name from the conversation context.
+- **Cold start:**
+  1. If `manifest.json` exists, parse the `name` field and strip the scope: `@nimblebraininc/<name>` → `<name>`
+  2. Otherwise, derive from the directory name: strip `mcp-` prefix (e.g., `mcp-stripe` → `stripe`)
+  3. If neither works, ask the user
 
 ### 0e: Naming Variables
 
-Derive all naming from the service name:
+Derive these values from `<name>` (the service name):
+
+| Variable | Example (`<name>` = `jsonplaceholder`) |
+|---|---|
+| `<name>` | `jsonplaceholder` |
+| `<Name>` (PascalCase) | `Jsonplaceholder` |
+| `<NAME>` (UPPER_SNAKE) | `JSONPLACEHOLDER` |
+| `<display>` (human-readable) | Ask the user, e.g. "JSONPlaceholder" |
+
+Language-specific derived names:
 
 | Variable | Python | TypeScript |
 |----------|--------|------------|
@@ -132,18 +129,85 @@ Derive all naming from the service name:
 | Source directory | `src/mcp_<name>/` | `src/` |
 | Env var | `<NAME>_API_KEY` | `<NAME>_API_KEY` |
 
-### 0f: Confirm
+### 0f: Repo Creation + Template Customization
 
-Show detection results and ask the user to confirm before proceeding. Skip this prompt only when all values came from a consistent same-session handoff and no mismatch was found.
+**Skip this sub-section** if `manifest.json` already exists with the correct service name — the repo is already set up.
+
+Otherwise:
+
+1. Make sure the user is outside of any existing git repo. If they aren't, help them navigate to a suitable directory first.
+
+2. Confirm before running:
+   "This will create a public repo at `NimbleBrainInc/mcp-<name>` on GitHub. Ready to go?"
+
+3. Once confirmed:
+
+   Python:
+   ```bash
+   gh repo create NimbleBrainInc/mcp-<name> \
+     --template NimbleBrainInc/mcp-server-template-python --public --clone
+   ```
+
+   Node / TypeScript:
+   ```bash
+   gh repo create NimbleBrainInc/mcp-<name> \
+     --template NimbleBrainInc/mcp-server-template-typescript --public --clone
+   ```
+
+4. **Immediately after cloning, `cd` into `mcp-<name>` and replace all template placeholders with the actual service name.** Do not move on until this is done — downstream phases assume the project already has correct names everywhere.
+
+**Python template substitutions:**
+
+1. Rename the package directory:
+   ```bash
+   mv src/mcp_example src/mcp_<name>
+   ```
+2. Replace across all files (`*.py`, `*.toml`, `*.json`, `*.md`, `Makefile`, `.env.example`):
+   - `mcp_example` → `mcp_<name>` (package name in imports, paths, logger)
+   - `mcp-example` → `mcp-<name>` (project/bundle name)
+   - `@nimblebraininc/example` → `@nimblebraininc/<name>` (registry identifier)
+   - `ExampleClient` → `<Name>Client` (class name)
+   - `ExampleAPIError` → `<Name>APIError` (class name)
+   - `EXAMPLE_API_KEY` → `<NAME>_API_KEY` (env var)
+   - `https://api.example.com/v1` → leave as TODO for Phase 3 to fill with actual API URL
+   - `https://example.com/settings/api` → leave as TODO for Phase 3
+   - `mcp-server-example` → `mcp-server-<name>` (User-Agent)
+   - `FastMCP("Example")` → `FastMCP("<display>")` (server display name)
+   - `"example"` in `pyproject.toml` keywords → `"<name>"`
+   - Update `pyproject.toml` URLs to use `mcp-<name>` repo name
+   - Update README title and description to reference `<display>` instead of "Example"
+
+**TypeScript template substitutions:**
+
+Replace across all files (`*.ts`, `*.json`, `*.md`, `Makefile`, `CLAUDE.md`):
+   - `YOUR_SERVER_NAME` → `<name>`
+   - `YOUR_DISPLAY_NAME` → `<display>`
+   - `YOUR_REPO_NAME` → `mcp-<name>`
+   - `YOUR_API_KEY_ENV_VAR` → `<NAME>_API_KEY`
+   - `YOUR_API_HOST` → leave as TODO for Phase 3
+   - `YOUR_API_BASE_URL` → leave as TODO for Phase 3
+   - `YOUR_GITHUB_USERNAME` → look up via `gh api user -q .login`
+   - `YOUR_SERVICE` → `<display>`
+
+After substitutions, do a quick sanity check — grep for any remaining `example`/`Example`/`EXAMPLE` (Python) or `YOUR_` (TypeScript) across the project. If any remain, fix them. Then confirm to the user: "Template customized — all placeholder names replaced with `<name>`."
+
+### 0g: API Key Readiness
+
+Ask the user to have their API key for the target service ready. They'll need it during Phase 3 implementation.
+
+### 0h: Confirm
+
+Show bootstrap summary and ask the user to confirm before proceeding. Skip this prompt only when warm-start with all values consistent.
 
 ```
-=> Detected:
+=> Bootstrap complete:
    Language: [Python/TypeScript]
    Service: <name>
    Module: <module>
    Env var: <NAME>_API_KEY
+   Repo: NimbleBrainInc/mcp-<name>
 
-=> Correct? [Y/n]
+=> Ready to start the build pipeline? [Y/n]
 ```
 
 ## Phase 1: API Analysis
@@ -175,7 +239,7 @@ Show detection results and ask the user to confirm before proceeding. Skip this 
 
 ## Phase 2: Scaffold
 
-The template repo already created the project structure. Verify it's intact.
+Phase 0 created the repo from template and customized all placeholders. Verify it's intact.
 
 **Python** — check that these exist:
 - `src/mcp_<name>/server.py`, `api_client.py`, `api_models.py`, `__init__.py`
@@ -237,7 +301,7 @@ See `references/PATTERNS.md` → "TypeScript Server Patterns" for complete code 
 - Use `.js` extensions in all imports (Node ESM requirement)
 - Never edit `src/constants.ts` manually — use `make sync`
 - Never edit `.github/workflows/` — shared infrastructure
-- Skills must be **self-contained** in a single `SKILL.md` (no `references/` subdirectory)
+- Skills created must be **self-contained** in a single `SKILL.md` (no `references/` subdirectory)
 
 ## Phase 4: Verify
 
@@ -424,4 +488,4 @@ See `references/` in this skill for:
 - `PATTERNS.md` — Complete code patterns, directory structures, CI workflows (Python + TypeScript)
 - `SKILL_FORMAT.md` — Skill frontmatter specification and validation rules
 
-The canonical project structure comes from the GitHub template repos (`NimbleBrainInc/mcp-server-template-python` and `NimbleBrainInc/mcp-server-template-typescript`), already cloned when the project was created via `/nimblebrain-contributor`.
+The canonical project structure comes from the GitHub template repos (`NimbleBrainInc/mcp-server-template-python` and `NimbleBrainInc/mcp-server-template-typescript`), cloned and customized during Phase 0 Bootstrap.

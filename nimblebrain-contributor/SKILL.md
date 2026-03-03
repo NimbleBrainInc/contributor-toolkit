@@ -87,27 +87,15 @@ If they want context → draw briefly from `references/ECOSYSTEM.md`, then retur
 
 **Transition to building:**
 
-Once they've picked something:
-"Great — want to get your environment set up and start building?"
-
-If ready → Ready to Build.
-
-### Ready to Build
-
-For users who have picked an integration and are ready to start. May arrive here from Path B or directly from calibration if they already know what they want to build.
-
-Start by asking which language they'll be building in using `AskUserQuestion`:
+Once they've picked something, ask which language they'll be building in using `AskUserQuestion`:
 "Which language are you building in?"
 - "Python"
 - "Node / TypeScript"
 
-Keep this throughout every step — it determines which tools to check, which template to use, and how the build pipeline runs.
+**Check environment:**
+Run the version checks listed in `references/DEV_SETUP.md` for the contributor's chosen language. Summarize what's missing — do not install anything automatically. For each missing tool, offer the install command from DEV_SETUP.md and wait for the user to confirm before proceeding.
 
-**Step 1: Check environment**
-
-Run the version checks listed in `references/DEV_SETUP.md` for the contributor's chosen language. Summarize what's missing — do not install anything automatically. For each missing tool, offer the install command from DEV_SETUP.md and wait for the user to confirm before proceeding. Once the environment is good, move on.
-
-**Step 2: Check the build-mcpb skill**
+**Check the build-mcpb skill:**
 
 ```bash
 ls ~/.claude/skills/build-mcpb/SKILL.md 2>/dev/null && echo "installed" || echo "MISSING"
@@ -118,100 +106,10 @@ If missing:
 mpak skill install @nimblebraininc/build-mcpb
 ```
 
-**Step 3: Create and customize the server repo**
+Once the environment is good and build-mcpb is installed:
+"Great — you've picked <service>. Your environment looks good and the build skill is ready. Just say the word and I'll hand off to the build pipeline, or type `/build-mcpb` to start."
 
-Make sure they are outside of any existing git repo. If they aren't, help them navigate to a suitable directory first.
-
-Then confirm before running:
-"This will create a public repo at `NimbleBrainInc/mcp-<name>` on GitHub. Ready to go?"
-
-Once confirmed:
-
-Python:
-```bash
-gh repo create NimbleBrainInc/mcp-<name> \
-  --template NimbleBrainInc/mcp-server-template-python --public --clone
-```
-
-Node / TypeScript:
-```bash
-gh repo create NimbleBrainInc/mcp-<name> \
-  --template NimbleBrainInc/mcp-server-template-typescript --public --clone
-```
-
-**Immediately after cloning, `cd` into `mcp-<name>` and replace all template placeholders with the actual service name.** Do not move on until this is done — downstream steps (including `/build-mcpb`) assume the project already has correct names everywhere. Also set `repo_path` to the absolute path of `mcp-<name>` for the handoff contract.
-
-Derive these values from `<name>` (the service name the user chose):
-
-| Variable | Example (`<name>` = `jsonplaceholder`) |
-|---|---|
-| `<name>` | `jsonplaceholder` |
-| `<Name>` (PascalCase) | `Jsonplaceholder` |
-| `<NAME>` (UPPER_SNAKE) | `JSONPLACEHOLDER` |
-| `<display>` (human-readable) | Ask the user, e.g. "JSONPlaceholder" |
-
-**Python template substitutions:**
-
-1. Rename the package directory:
-   ```bash
-   mv src/mcp_example src/mcp_<name>
-   ```
-2. Replace across all files (`*.py`, `*.toml`, `*.json`, `*.md`, `Makefile`, `.env.example`):
-   - `mcp_example` → `mcp_<name>` (package name in imports, paths, logger)
-   - `mcp-example` → `mcp-<name>` (project/bundle name)
-   - `@nimblebraininc/example` → `@nimblebraininc/<name>` (registry identifier)
-   - `ExampleClient` → `<Name>Client` (class name)
-   - `ExampleAPIError` → `<Name>APIError` (class name)
-   - `EXAMPLE_API_KEY` → `<NAME>_API_KEY` (env var)
-   - `https://api.example.com/v1` → leave as TODO for build-mcpb to fill with actual API URL
-   - `https://example.com/settings/api` → leave as TODO for build-mcpb
-   - `mcp-server-example` → `mcp-server-<name>` (User-Agent)
-   - `FastMCP("Example")` → `FastMCP("<display>")` (server display name)
-   - `"example"` in `pyproject.toml` keywords → `"<name>"`
-   - Update `pyproject.toml` URLs to use `mcp-<name>` repo name
-   - Update README title and description to reference `<display>` instead of "Example"
-
-**TypeScript template substitutions:**
-
-Replace across all files (`*.ts`, `*.json`, `*.md`, `Makefile`, `CLAUDE.md`):
-   - `YOUR_SERVER_NAME` → `<name>`
-   - `YOUR_DISPLAY_NAME` → `<display>`
-   - `YOUR_REPO_NAME` → `mcp-<name>`
-   - `YOUR_API_KEY_ENV_VAR` → `<NAME>_API_KEY`
-   - `YOUR_API_HOST` → leave as TODO for build-mcpb
-   - `YOUR_API_BASE_URL` → leave as TODO for build-mcpb
-   - `YOUR_GITHUB_USERNAME` → look up via `gh api user -q .login`
-   - `YOUR_SERVICE` → `<display>`
-
-After substitutions, do a quick sanity check — grep for any remaining `example`/`Example`/`EXAMPLE` (Python) or `YOUR_` (TypeScript) across the project. If any remain, fix them. Then confirm to the user: "Template customized — all placeholder names replaced with `<name>`."
-
-**Step 4: API key**
-
-Ask the user to have their API key for the target service ready. They'll need it when the build pipeline starts.
-
-**Step 5: Hand off**
-
-Before closing out, establish the handoff contract for `/build-mcpb`:
-- `service`: `<name>`
-- `language`: Python or Node/TypeScript
-- `repo_path`: absolute path to `mcp-<name>`
-- `repo`: placeholders are fully replaced
-- `api_key_ready`: contributor confirms they have the target API key ready
-
-Before prompting `/build-mcpb`, enforce directory state:
-- if current directory is not `repo_path`, run `cd <repo_path>`
-- verify `pwd` is `repo_path`
-- verify `manifest.json` exists in the current directory
-
-Then offer a preview:
-"Your environment is set up and the repo is ready. Want a quick overview of what the build pipeline covers before you start, or ready to type `/build-mcpb` now?"
-
-If they want a preview → draw from `references/PIPELINE.md`, then prompt them to type `/build-mcpb`.
-
-When explaining the pipeline end state, be clear about the goal:
-"After building, you'll commit to `main`, cut a GitHub Release, and your bundle will be automatically built and published to the mpak registry."
-
-When ready: "Type `/build-mcpb` in this same session now so we continue with full context."
+When ready: invoke `/build-mcpb` in this same session so the build pipeline picks up context from the conversation.
 
 ### Path B: Filing an Issue
 
@@ -311,7 +209,7 @@ Present the results clearly — summarize what's open, what's recently closed, a
 After presenting, offer a natural next step:
 "Want to pick up something new, or jump back into what you were building?"
 
-If new work → Path A. If continuing a build → Ready to Build.
+If new work → Path A. If continuing a build → tell them to type /build-mcpb to pick up where they left off.
 
 ### Path D: Exploring the Ecosystem
 

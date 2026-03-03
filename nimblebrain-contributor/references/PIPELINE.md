@@ -6,7 +6,7 @@
 Scaffold → Implement → Verify → Validate Bundle → Author Skills → Release
 ```
 
-All phases are handled by `/build-mcpb`. The skill auto-detects language and service name from the repo.
+All phases are handled by `/build-mcpb`. The skill bootstraps language, service name, and repo setup, then runs the build pipeline.
 
 ## Step 1: Scaffold
 
