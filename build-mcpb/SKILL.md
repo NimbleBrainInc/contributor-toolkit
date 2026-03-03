@@ -441,45 +441,88 @@ mpak skill pack ./skills/<skill-name>
 
 The contributor created and owns the repo — there is no PR to open. The goal is: code on `main` → GitHub Release → `build-bundle.yml` triggers → bundles built and published to the mpak registry.
 
-### 7a: Commit to main
+### 7a: Pre-flight Checks
+
+Before committing, verify the release will succeed:
+
+1. **Version consistency** — Read the version from `manifest.json` and confirm it matches across all version sources:
+   - Python: `pyproject.toml`, `server.json`, `src/mcp_<name>/__init__.py`
+   - TypeScript: run `make sync` and verify no diff
+   If anything is out of sync, run `make bump VERSION=<version>` to fix.
+2. **`mpak.json`** — Must exist in the repo root with `name` matching `manifest.json`. Without it, the registry announce fails silently after the bundle builds.
+3. **No secrets in working tree** — Check for `.env` files or anything containing real API keys. Warn the contributor if found; do not stage them.
+4. **Skills validated** — For each skill in `skills/`, run `mpak skill validate ./skills/<skill-name>` and fix any issues before committing.
+
+### 7b: Stage and Commit
+
+Do not use `git add -A`. Review first, then stage explicitly:
+
+1. Run `git status` and show the contributor what will be committed.
+2. Stage server source, tests, skills, manifests, config, and workflow files. Do NOT stage `.env`, credentials, or debug artifacts.
+3. Derive the version from `manifest.json` for the commit message:
 
 ```bash
-git add -A && git commit -m "Add <service> MCP server + companion skills"
+VERSION=$(jq -r .version manifest.json)
+git add <files...>
+git commit -m "Add <service> MCP server v${VERSION} + companion skills"
 ```
 
-### 7b: Push
+### 7c: Push
 
-Ask the user to push their changes:
+Do NOT push on the contributor's behalf. Ask them:
 
 "Push your changes to GitHub: `git push origin main`"
 
-Do not push on the user's behalf.
+### 7d: Verify CI
 
-### 7c: Verify CI
-
-Wait for CI to pass. Direct the user to the Actions tab:
-
-"Check your repo's Actions tab to confirm CI passes: `https://github.com/NimbleBrainInc/mcp-<name>/actions`"
-
-### 7d: Cut a release
-
-Guide the user to create a GitHub release:
+After the push, actively monitor CI — don't just point to a URL:
 
 ```bash
-gh release create v0.1.0 --title "v0.1.0" --generate-notes
+gh run list --repo NimbleBrainInc/mcp-<name> --branch main --limit 1
+gh run watch --repo NimbleBrainInc/mcp-<name>
 ```
 
-### 7e: Verify bundle build
+If CI fails: read the logs with `gh run view <run-id> --log-failed`, help the contributor diagnose and fix, then create a new commit (not amend).
 
-"Check your Actions tab — you should see the **Build MCPB Bundle** workflow running on 3 runners (linux-amd64, linux-arm64, darwin-arm64)."
+### 7e: Cut Release
 
-### 7f: Confirm publication
+Once CI passes, derive the tag from `manifest.json`:
 
-Once the build completes, confirm the bundle is announced on the registry:
+```bash
+VERSION=$(jq -r .version manifest.json)
+gh release create "v${VERSION}" --title "v${VERSION}" --generate-notes
+```
 
+### 7f: Monitor Bundle Build
+
+The release triggers `build-bundle.yml` on 3 runners (linux-amd64, linux-arm64, darwin-arm64). Track it:
+
+```bash
+gh run list --repo NimbleBrainInc/mcp-<name> --workflow=build-bundle.yml --limit 1
+gh run watch --repo NimbleBrainInc/mcp-<name>
+```
+
+If a runner fails, check logs with `gh run view <run-id> --log-failed`. Common issues:
+- **Dependency vendor fails** — version conflicts in `pyproject.toml` / `package.json`
+- **mcpb pack fails** — `manifest.json` format issues (re-check against Phase 5a checklist)
+- **OIDC announce fails** — `mpak.json` missing or `name` doesn't match manifest
+
+### 7g: Wrap Up
+
+Once all 3 runners succeed, the server bundle is announced to the mpak registry. Tell the contributor:
+
+"Your `<display>` MCP server is built, bundled, and announced to the mpak registry. It may take several minutes to propagate. Once live, anyone can run it:
+
+```
+mpak run @nimblebraininc/<name>
+```
+
+To check availability:
 ```bash
 mpak search <name>
 ```
+
+**Note on companion skills:** The skills in `skills/` are committed to your repo but are not included in the `.mcpb` server bundle — skills are distributed separately. Skill publishing from server repos is not yet automated; this will be addressed in a future template update."
 
 ## References
 
