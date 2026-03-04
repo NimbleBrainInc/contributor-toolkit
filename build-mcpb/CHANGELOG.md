@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.0](https://github.com/NimbleBrainInc/contributor-toolkit/compare/build-mcpb/v0.2.1...build-mcpb/v0.3.0) (2026-03-04)
+
+
+### Features
+
+* **build-mcpb:** add TypeScript support and auto-detection ([7fed5a3](https://github.com/NimbleBrainInc/contributor-toolkit/commit/7fed5a3e76e820a425f1778ac54e4a517ba07a32))
+* **build-mcpb:** align with mpak registry validation requirements ([020d7aa](https://github.com/NimbleBrainInc/contributor-toolkit/commit/020d7aa4e992edec8b8b14a97c231f55fe338656))
+
 ## [0.2.1](https://github.com/NimbleBrainInc/contributor-toolkit/compare/build-mcpb/v0.2.0...build-mcpb/v0.2.1) (2026-02-16)
 
 
