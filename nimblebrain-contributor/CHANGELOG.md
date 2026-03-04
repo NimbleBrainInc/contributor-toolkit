@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/NimbleBrainInc/contributor-toolkit/compare/nimblebrain-contributor/v0.3.0...nimblebrain-contributor/v0.4.0) (2026-03-04)
+
+
+### Features
+
+* **nimblebrain-contributor:** adopt embedded skill model and refactor responsibilities ([02854a5](https://github.com/NimbleBrainInc/contributor-toolkit/commit/02854a509f31aecff974f0572a04a7a246e04090))
+
 ## [0.3.0](https://github.com/NimbleBrainInc/contributor-toolkit/compare/nimblebrain-contributor/v0.2.2...nimblebrain-contributor/v0.3.0) (2026-03-02)
 
 
