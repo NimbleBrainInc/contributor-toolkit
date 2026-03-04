@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/NimbleBrainInc/contributor-toolkit/compare/build-mcpb/v0.3.0...build-mcpb/v0.4.0) (2026-03-04)
+
+
+### Features
+
+* **build-mcpb:** adopt embedded skill model and remove templates ([255356b](https://github.com/NimbleBrainInc/contributor-toolkit/commit/255356b6589decf517006e227cb1ceda866c3ea1))
+
 ## [0.3.0](https://github.com/NimbleBrainInc/contributor-toolkit/compare/build-mcpb/v0.2.1...build-mcpb/v0.3.0) (2026-03-04)
 
 
