@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.3.0](https://github.com/NimbleBrainInc/contributor-toolkit/compare/nimblebrain-contributor/v0.2.2...nimblebrain-contributor/v0.3.0) (2026-03-02)
+
+
+### Features
+
+* **nimblebrain-contributor:** add ECOSYSTEM and RESOURCES reference files ([940597d](https://github.com/NimbleBrainInc/contributor-toolkit/commit/940597d49c1468a40bce47b7a2eb3a687f229baf))
+* **nimblebrain-contributor:** add ECOSYSTEM and RESOURCES reference files ([9ff3fe6](https://github.com/NimbleBrainInc/contributor-toolkit/commit/9ff3fe6ac238dcaa9411f91c13a15f85195630a2))
+* **nimblebrain-contributor:** rewrite SKILL.md with adaptive onboarding flow ([3b75720](https://github.com/NimbleBrainInc/contributor-toolkit/commit/3b75720f85944116652ee08be8c1098d5285e200))
+* **nimblebrain-contributor:** rewrite SKILL.md with adaptive onboarding flow ([c915e09](https://github.com/NimbleBrainInc/contributor-toolkit/commit/c915e097e0361d4059916ad289a9fe3e49c0ed73))
+
+
+### Bug Fixes
+
+* **nimblebrain-contributor:** ask language before creating repo, fix step ordering ([acfe5a7](https://github.com/NimbleBrainInc/contributor-toolkit/commit/acfe5a7d837c99e08c88127af0f3f3ea8c3e811f))
+* **nimblebrain-contributor:** ask language before creating repo, fix step ordering ([cf2ada2](https://github.com/NimbleBrainInc/contributor-toolkit/commit/cf2ada2c8250b078c4d375c64eefcd88ab991ffb))
+
 ## [0.2.2](https://github.com/NimbleBrainInc/contributor-toolkit/compare/nimblebrain-contributor/v0.2.1...nimblebrain-contributor/v0.2.2) (2026-02-16)
 
 
