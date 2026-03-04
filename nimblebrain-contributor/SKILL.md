@@ -1,6 +1,7 @@
 ---
 name: nimblebrain-contributor
 description: Get started contributing to NimbleBrain open source. Find available integrations to build, set up your environment, propose new ideas, or check on your work — with depth available whenever you want it. Triggers include "I'm a new contributor", "onboard me", "what should I build", "show me open issues", "file an issue".
+version: 0.3.0
 license: Apache-2.0
 compatibility: gh (GitHub CLI) authenticated with GitHub. Python 3.13+, uv, ruff, ty for Python MCP server work. Node.js 18+, npm for TypeScript MCP server work.
 allowed-tools: Read Write Bash Glob Grep WebFetch AskUserQuestion
