@@ -87,27 +87,15 @@ If they want context → draw briefly from `references/ECOSYSTEM.md`, then retur
 
 **Transition to building:**
 
-Once they've picked something:
-"Great — want to get your environment set up and start building?"
-
-If ready → Ready to Build.
-
-### Ready to Build
-
-For users who have picked an integration and are ready to start. May arrive here from Path B or directly from calibration if they already know what they want to build.
-
-Start by asking which language they'll be building in using `AskUserQuestion`:
+Once they've picked something, ask which language they'll be building in using `AskUserQuestion`:
 "Which language are you building in?"
 - "Python"
 - "Node / TypeScript"
 
-Keep this throughout every step — it determines which tools to check, which template to use, and how the build pipeline runs.
+**Check environment:**
+Run the version checks listed in `references/DEV_SETUP.md` for the contributor's chosen language. Summarize what's missing — do not install anything automatically. For each missing tool, offer the install command from DEV_SETUP.md and wait for the user to confirm before proceeding.
 
-**Step 1: Check environment**
-
-Run the version checks listed in `references/DEV_SETUP.md` for the contributor's chosen language. Summarize what's missing — do not install anything automatically. For each missing tool, offer the install command from DEV_SETUP.md and wait for the user to confirm before proceeding. Once the environment is good, move on.
-
-**Step 2: Check the build-mcpb skill**
+**Check the build-mcpb skill:**
 
 ```bash
 ls ~/.claude/skills/build-mcpb/SKILL.md 2>/dev/null && echo "installed" || echo "MISSING"
@@ -118,39 +106,10 @@ If missing:
 mpak skill install @nimblebraininc/build-mcpb
 ```
 
-**Step 3: Create the server repo**
+Once the environment is good and build-mcpb is installed:
+"Great — you've picked <service>. Your environment looks good and the build skill is ready. Just say the word and I'll hand off to the build pipeline, or type `/build-mcpb` to start."
 
-Make sure they are outside of any existing git repo. If they aren't, help them navigate to a suitable directory first.
-
-Then confirm before running:
-"This will create a public repo at `NimbleBrainInc/mcp-<name>` on GitHub. Ready to go?"
-
-Once confirmed:
-
-Python:
-```bash
-gh repo create NimbleBrainInc/mcp-<name> \
-  --template NimbleBrainInc/mcp-server-template-python --public --clone
-```
-
-Node / TypeScript:
-```bash
-gh repo create NimbleBrainInc/mcp-<name> \
-  --template NimbleBrainInc/mcp-server-template-typescript --public --clone
-```
-
-**Step 4: API key**
-
-Ask the user to have their API key for the target service ready. They'll need it when the build pipeline starts.
-
-**Step 5: Hand off**
-
-Before closing out, offer a preview:
-"Your environment is set up and the repo is ready. Want a quick overview of what the build pipeline covers before you start, or ready to type `/build-mcpb` now?"
-
-If they want a preview → draw from `references/PIPELINE.md`, then prompt them to type `/build-mcpb`.
-
-When ready: "Type `/build-mcpb` here to kick off the build — no need to open a new session. If you'd prefer a fresh context window, open a new Claude Code session from inside `mcp-<name>` and type `/build-mcpb` there."
+When ready: invoke `/build-mcpb` in this same session so the build pipeline picks up context from the conversation.
 
 ### Path B: Filing an Issue
 
@@ -172,8 +131,14 @@ Ask these questions one at a time, not all at once:
 
 From their answers, suggest 2–3 concrete skill workflows (e.g. "post a message and wait for a reply", "summarize unread threads"). If they're unsure, offer examples based on the service type.
 
-Once you have everything, show them the issue body for review before filing:
+Once you have everything, show them the issue body for review before filing.
 
+First, ensure the label exists (it may not on a fresh org):
+```bash
+gh label create integration --repo NimbleBrainInc/.github 2>/dev/null || true
+```
+
+Then create the issue:
 ```bash
 gh issue create --repo NimbleBrainInc/.github \
   --title "New MCP Server: <service name>" \
@@ -244,7 +209,7 @@ Present the results clearly — summarize what's open, what's recently closed, a
 After presenting, offer a natural next step:
 "Want to pick up something new, or jump back into what you were building?"
 
-If new work → Path A. If continuing a build → Ready to Build.
+If new work → Path A. If continuing a build → tell them to type /build-mcpb to pick up where they left off.
 
 ### Path D: Exploring the Ecosystem
 

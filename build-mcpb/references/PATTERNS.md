@@ -8,7 +8,8 @@
 <server-name>/
 ├── .github/workflows/
 │   ├── build-bundle.yml
-│   └── ci.yml
+│   ├── ci.yml
+│   └── scan.yml
 ├── src/mcp_<name>/
 │   ├── __init__.py
 │   ├── api_models.py
@@ -64,7 +65,7 @@ dev = [
     "pytest>=8.4.0",
     "pytest-asyncio>=0.24.0",
     "ruff>=0.13.0",
-    "ty>=0.1.0",
+    "ty>=0.0.17",
 ]
 ```
 
@@ -359,6 +360,60 @@ jobs:
           output: "{name}-{version}-${{ matrix.os }}-${{ matrix.arch }}.mcpb"
 ```
 
+**scan.yml:**
+```yaml
+name: Security Scan
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v4
+      - run: uv python install 3.13
+      - run: uv sync
+      - name: Build bundle
+        run: npx @anthropic-ai/mcpb pack
+      - name: Run MTF scanner
+        run: |
+          if pip install mpak-scanner 2>/dev/null; then
+            mpak-scanner scan *.mcpb --json > scan-results.json
+          else
+            echo "mpak-scanner not yet available — skipping client-side scan"
+            echo '{"findings": []}' > scan-results.json
+          fi
+      - name: Check for critical/high findings
+        run: |
+          python3 -c "
+          import json, sys
+          with open('scan-results.json') as f:
+              results = json.load(f)
+          findings = results.get('findings', [])
+          critical_high = [f for f in findings if f.get('severity') in ('CRITICAL', 'HIGH')]
+          if critical_high:
+              print(f'FAIL: {len(critical_high)} critical/high findings')
+              sys.exit(1)
+          print(f'PASS: No critical/high findings ({len(findings)} total findings)')
+          "
+```
+
+### Makefile `bundle` Target (Python)
+
+```makefile
+bundle: ## Build MCPB bundle locally
+	rm -rf deps/
+	uv pip install --target ./deps --only-binary :all: . 2>/dev/null || uv pip install --target ./deps .
+	npx @anthropic-ai/mcpb pack .
+	@echo "Bundle created. Run 'ls -la *.mcpb' to see it."
+```
+
+This vendors dependencies into `deps/` (same as the GitHub Action does), then packs. Contributors can validate bundles locally before releasing.
+
 ### Build & Test Commands (Python)
 
 ```bash
@@ -368,6 +423,7 @@ uv run ruff check src/ tests/        # Lint
 uv run ty check src/                 # Type check
 uv run pytest tests/ -v              # Test
 make check                           # All of the above
+make bundle                          # Vendor deps + mcpb pack (local bundle)
 
 # Test locally
 <NAME>_API_KEY=xxx uv run python -m mcp_<name>.server
@@ -410,7 +466,7 @@ make check                           # All of the above
 ├── LICENSE
 ├── Makefile
 ├── README.md
-├── eslint.config.js
+├── biome.json
 ├── manifest.json             # MCPB manifest (v0.4) — version source of truth
 ├── mpak.json
 ├── package.json
@@ -714,7 +770,7 @@ src/
 Makefile
 tsconfig.json
 vitest.config.ts
-eslint.config.js
+biome.json
 pyproject.toml
 CLAUDE.md
 README.md
@@ -833,8 +889,8 @@ jobs:
 
 ```bash
 npm install                          # Install dependencies
-npm run format:check                 # Check formatting (Prettier)
-npm run lint                         # Lint (ESLint)
+npm run format:check                 # Check formatting (Biome)
+npm run lint                         # Lint (Biome)
 npm run typecheck                    # Type check (tsc --noEmit)
 npm run test                         # Test (Vitest)
 make check                           # All of the above

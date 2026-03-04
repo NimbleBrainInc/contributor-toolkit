@@ -1,8 +1,8 @@
 ---
 name: build-mcpb
-description: Build MCP servers end-to-end. Scaffolds a production-ready Python or TypeScript server from API documentation, implements tools, validates the MCPB bundle, and authors companion skills. Covers the full lifecycle from API analysis to PR-ready deliverable. Use when building a new MCP server, wrapping an API, or creating an integration. Triggers include "build an MCP server", "create a server for X", "/build-mcpb".
+description: Build MCP servers end-to-end. Scaffolds a production-ready Python or TypeScript server from API documentation, implements tools, validates the MCPB bundle, authors companion skills, and guides release to the mpak registry. Covers the full lifecycle from API analysis to published bundle. Use when building a new MCP server, wrapping an API, or creating an integration. Triggers include "build an MCP server", "create a server for X", "/build-mcpb".
 license: Apache-2.0
-compatibility: Python 3.13+, uv, ruff, ty OR Node.js 24+, npm. Docker, mpak CLI. Claude Code with filesystem access.
+compatibility: Python 3.13+, uv, ruff, ty OR Node.js 24+, npm. Docker, mpak CLI. Claude Code or Codex with filesystem access.
 allowed-tools: Read Write Bash Glob Grep WebFetch AskUserQuestion
 metadata:
   tags:
@@ -35,6 +35,7 @@ metadata:
   version: "0.1.0"
   surfaces:
     - claude-code
+    - codex
   author:
     name: NimbleBrain
     url: https://nimblebrain.ai
@@ -47,7 +48,7 @@ metadata:
 
 # Build MCPB
 
-Build MCP servers end-to-end: scaffold from API docs, implement tools, validate the bundle, and author companion skills. Supports Python (FastMCP) and TypeScript (@modelcontextprotocol/sdk).
+Build MCP servers end-to-end: scaffold from API docs, implement tools, validate the bundle, author companion skills, and release to the mpak registry. Supports Python (FastMCP) and TypeScript (@modelcontextprotocol/sdk).
 
 ## Quick Start
 
@@ -55,53 +56,71 @@ Build MCP servers end-to-end: scaffold from API docs, implement tools, validate 
 > /build-mcpb
 ```
 
-The skill auto-detects language and service name from the current directory.
+The skill bootstraps everything needed: language, service name, repo creation, template setup — then proceeds through the build pipeline.
 
 ## Pipeline Overview
 
 ```
-Phase 0: Detect           Auto-detect language + service name from repo
+Phase 0: Bootstrap        Language, service name, repo creation, template setup
 Phase 1: API Analysis     Fetch docs, identify resources, propose tools
 Phase 2: Scaffold         Verify project structure from template
 Phase 3: Implement        Write tool logic, models, client
 Phase 4: Verify           Lint, typecheck, test
 Phase 5: Validate Bundle  Manifest, build, bundle, MTF scan, runtime
 Phase 6: Author Skills    Generate 2-3 companion skills
-Phase 7: Prepare PR       Assemble PR with server + skills
+Phase 7: Release          Commit, push, cut release, verify bundle
 ```
 
-## Phase 0: Detect
+## Phase 0: Bootstrap
 
-Auto-detect the project language and service name.
+Set up language, service name, repo, and template customization — everything needed before the build pipeline begins.
 
-### 0a: Prerequisites (cold-start guard)
+### 0a: Entry Routing
 
-If the contributor arrived directly (not via `/nimblebrain-contributor`), verify the basics before proceeding:
+Determine whether this is a **warm start** or **cold start**:
+
+- **Warm start:** Invoked from `/nimblebrain-contributor` (or after it) in the same session. The conversation already contains a service name, language choice, and the environment has been checked. Heuristic: if the conversation already contains a service name from prior nimblebrain-contributor interaction, treat as warm.
+- **Cold start:** Standalone `/build-mcpb` invocation with no prior context. Need to establish everything from scratch.
+
+### 0b: Prerequisites (cold-start only)
+
+If cold start, verify the basics before proceeding:
 
 1. **gh CLI** — `gh auth status` succeeds
 2. **Language toolchain** — Python: `uv --version`, `ruff --version`, `ty --version`; TypeScript: `node --version`, `npm --version`
 3. **mpak CLI** — `mpak --version` succeeds
-4. **Repo structure** — `manifest.json` exists and its `name` starts with `@nimblebraininc/` (confirms it was created from a NimbleBrain template)
 
-If any check fails, tell the contributor what's missing and point them to `/nimblebrain-contributor` or `DEV_SETUP.md` for setup instructions. Don't block on optional tools (e.g., mpak-scanner) — just note they're unavailable and skip the phases that need them.
+If any check fails, tell the contributor what's missing and point them to `~/.claude/skills/nimblebrain-contributor/references/DEV_SETUP.md` for setup instructions. Don't block on optional tools (e.g., mpak-scanner) — just note they're unavailable and skip the phases that need them.
 
-### 0b: Language
+### 0c: Language
 
-Check the current working directory:
-- `pyproject.toml` exists → **Python**
-- `package.json` exists → **TypeScript**
-- Neither → ask the user which language they're using
-- Both → ask the user (unusual — clarify which is primary)
+- **Warm start:** Use the language from the conversation context.
+- **Cold start:** Check the current working directory:
+  - `pyproject.toml` exists → **Python**
+  - `package.json` exists → **TypeScript**
+  - Neither → ask the user which language they're using
+  - Both → ask the user (unusual — clarify which is primary)
 
-### 0c: Service Name
+### 0d: Service Name
 
-1. If `manifest.json` exists, parse the `name` field and strip the scope: `@nimblebraininc/<name>` → `<name>`
-2. Otherwise, derive from the directory name: strip `mcp-` prefix (e.g., `mcp-stripe` → `stripe`)
-3. If neither works, ask the user
+- **Warm start:** Use the service name from the conversation context.
+- **Cold start:**
+  1. If `manifest.json` exists, parse the `name` field and strip the scope: `@nimblebraininc/<name>` → `<name>`
+  2. Otherwise, derive from the directory name: strip `mcp-` prefix (e.g., `mcp-stripe` → `stripe`)
+  3. If neither works, ask the user
 
-### 0d: Naming Variables
+### 0e: Naming Variables
 
-Derive all naming from the service name:
+Derive these values from `<name>` (the service name):
+
+| Variable | Example (`<name>` = `jsonplaceholder`) |
+|---|---|
+| `<name>` | `jsonplaceholder` |
+| `<Name>` (PascalCase) | `Jsonplaceholder` |
+| `<NAME>` (UPPER_SNAKE) | `JSONPLACEHOLDER` |
+| `<display>` (human-readable) | Ask the user, e.g. "JSONPlaceholder" |
+
+Language-specific derived names:
 
 | Variable | Python | TypeScript |
 |----------|--------|------------|
@@ -110,18 +129,85 @@ Derive all naming from the service name:
 | Source directory | `src/mcp_<name>/` | `src/` |
 | Env var | `<NAME>_API_KEY` | `<NAME>_API_KEY` |
 
-### 0e: Confirm
+### 0f: Repo Creation + Template Customization
 
-Show detection results and ask the user to confirm before proceeding:
+**Skip this sub-section** if `manifest.json` already exists with the correct service name — the repo is already set up.
+
+Otherwise:
+
+1. Make sure the user is outside of any existing git repo. If they aren't, help them navigate to a suitable directory first.
+
+2. Confirm before running:
+   "This will create a public repo at `NimbleBrainInc/mcp-<name>` on GitHub. Ready to go?"
+
+3. Once confirmed:
+
+   Python:
+   ```bash
+   gh repo create NimbleBrainInc/mcp-<name> \
+     --template NimbleBrainInc/mcp-server-template-python --public --clone
+   ```
+
+   Node / TypeScript:
+   ```bash
+   gh repo create NimbleBrainInc/mcp-<name> \
+     --template NimbleBrainInc/mcp-server-template-typescript --public --clone
+   ```
+
+4. **Immediately after cloning, `cd` into `mcp-<name>` and replace all template placeholders with the actual service name.** Do not move on until this is done — downstream phases assume the project already has correct names everywhere.
+
+**Python template substitutions:**
+
+1. Rename the package directory:
+   ```bash
+   mv src/mcp_example src/mcp_<name>
+   ```
+2. Replace across all files (`*.py`, `*.toml`, `*.json`, `*.md`, `Makefile`, `.env.example`):
+   - `mcp_example` → `mcp_<name>` (package name in imports, paths, logger)
+   - `mcp-example` → `mcp-<name>` (project/bundle name)
+   - `@nimblebraininc/example` → `@nimblebraininc/<name>` (registry identifier)
+   - `ExampleClient` → `<Name>Client` (class name)
+   - `ExampleAPIError` → `<Name>APIError` (class name)
+   - `EXAMPLE_API_KEY` → `<NAME>_API_KEY` (env var)
+   - `https://api.example.com/v1` → leave as TODO for Phase 3 to fill with actual API URL
+   - `https://example.com/settings/api` → leave as TODO for Phase 3
+   - `mcp-server-example` → `mcp-server-<name>` (User-Agent)
+   - `FastMCP("Example")` → `FastMCP("<display>")` (server display name)
+   - `"example"` in `pyproject.toml` keywords → `"<name>"`
+   - Update `pyproject.toml` URLs to use `mcp-<name>` repo name
+   - Update README title and description to reference `<display>` instead of "Example"
+
+**TypeScript template substitutions:**
+
+Replace across all files (`*.ts`, `*.json`, `*.md`, `Makefile`, `CLAUDE.md`):
+   - `YOUR_SERVER_NAME` → `<name>`
+   - `YOUR_DISPLAY_NAME` → `<display>`
+   - `YOUR_REPO_NAME` → `mcp-<name>`
+   - `YOUR_API_KEY_ENV_VAR` → `<NAME>_API_KEY`
+   - `YOUR_API_HOST` → leave as TODO for Phase 3
+   - `YOUR_API_BASE_URL` → leave as TODO for Phase 3
+   - `YOUR_GITHUB_USERNAME` → look up via `gh api user -q .login`
+   - `YOUR_SERVICE` → `<display>`
+
+After substitutions, do a quick sanity check — grep for any remaining `example`/`Example`/`EXAMPLE` (Python) or `YOUR_` (TypeScript) across the project. If any remain, fix them. Then confirm to the user: "Template customized — all placeholder names replaced with `<name>`."
+
+### 0g: API Key Readiness
+
+Ask the user to have their API key for the target service ready. They'll need it during Phase 3 implementation.
+
+### 0h: Confirm
+
+Show bootstrap summary and ask the user to confirm before proceeding. Skip this prompt only when warm-start with all values consistent.
 
 ```
-=> Detected:
+=> Bootstrap complete:
    Language: [Python/TypeScript]
    Service: <name>
    Module: <module>
    Env var: <NAME>_API_KEY
+   Repo: NimbleBrainInc/mcp-<name>
 
-=> Correct? [Y/n]
+=> Ready to start the build pipeline? [Y/n]
 ```
 
 ## Phase 1: API Analysis
@@ -153,12 +239,12 @@ Show detection results and ask the user to confirm before proceeding:
 
 ## Phase 2: Scaffold
 
-The template repo already created the project structure. Verify it's intact.
+Phase 0 created the repo from template and customized all placeholders. Verify it's intact.
 
 **Python** — check that these exist:
 - `src/mcp_<name>/server.py`, `api_client.py`, `api_models.py`, `__init__.py`
 - `tests/`
-- `manifest.json`, `pyproject.toml`, `Makefile`
+- `manifest.json`, `server.json`, `pyproject.toml`, `Makefile`
 - `.github/workflows/ci.yml`, `.github/workflows/build-bundle.yml`
 
 **TypeScript** — check that these exist:
@@ -191,6 +277,7 @@ Implement in this order:
 1. **`api_models.py`** — Pydantic models for API responses. Use `Field(alias=...)` for camelCase mapping.
 2. **`api_client.py`** — Async aiohttp client. Set BASE_URL, add one method per endpoint.
 3. **`server.py`** — FastMCP server with `@mcp.tool()` decorators. Global client with lazy init. Dual transport (http_app + stdio).
+4. **`manifest.json`** + **`server.json`** — Fill all placeholder fields. See `references/CONVENTIONS.md` for the full `server.json` schema.
 
 See `references/PATTERNS.md` → "Python Server Patterns" for complete code examples.
 
@@ -214,7 +301,7 @@ See `references/PATTERNS.md` → "TypeScript Server Patterns" for complete code 
 - Use `.js` extensions in all imports (Node ESM requirement)
 - Never edit `src/constants.ts` manually — use `make sync`
 - Never edit `.github/workflows/` — shared infrastructure
-- Skills must be **self-contained** in a single `SKILL.md` (no `references/` subdirectory)
+- Skills created must be **self-contained** in a single `SKILL.md` (no `references/` subdirectory)
 
 ## Phase 4: Verify
 
@@ -274,7 +361,7 @@ This file is required for package claiming on the registry. The `name` must matc
 
 ### 5c: Bundle Inspection
 
-- **Python:** `mcpb build` produces clean bundle
+- **Python:** `make bundle` (vendors deps into `deps/`, packs with `npx @anthropic-ai/mcpb pack`)
 - **TypeScript:** `make bundle` (builds, prunes dev deps, packs)
 - Both: no accidental large files (.git, node_modules), manifest.json present in bundle root
 
@@ -286,19 +373,19 @@ mpak-scanner scan .
 
 ### 5e: Runtime Validation
 
+The MCP protocol requires an initialize handshake before any method calls. Send `initialize`, then `notifications/initialized`, then `tools/list`:
+
 **Python:**
 ```bash
-echo '{"jsonrpc":"2.0","method":"tools/list","id":1}' | \
-  uv run python -m mcp_<name>.server
+printf '{"jsonrpc":"2.0","method":"initialize","id":1,"params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"test","version":"0.1.0"}}}\n{"jsonrpc":"2.0","method":"notifications/initialized"}\n{"jsonrpc":"2.0","method":"tools/list","id":2}\n' | uv run python -m mcp_<name>.server 2>/dev/null
 ```
 
 **TypeScript:**
 ```bash
-echo '{"jsonrpc":"2.0","method":"tools/list","id":1}' | \
-  node build/index.js --stdio
+printf '{"jsonrpc":"2.0","method":"initialize","id":1,"params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"test","version":"0.1.0"}}}\n{"jsonrpc":"2.0","method":"notifications/initialized"}\n{"jsonrpc":"2.0","method":"tools/list","id":2}\n' | node build/index.js --stdio 2>/dev/null
 ```
 
-Both: server responds with valid JSON-RPC `tools/list` result. No garbage on stdout (logs go to stderr).
+Both: server responds with valid JSON-RPC `initialize` result followed by `tools/list` result. No garbage on stdout (logs go to stderr).
 
 ## Phase 6: Author Companion Skills
 
@@ -350,33 +437,92 @@ mpak skill pack ./skills/<skill-name>
 - [ ] Example included
 - [ ] Declares server dependency in compatibility
 
-## Phase 7: Prepare PR
+## Phase 7: Release
 
-**PR title:** `Add <server-name> MCP server + companion skills`
+The contributor created and owns the repo — there is no PR to open. The goal is: code on `main` → GitHub Release → `build-bundle.yml` triggers → bundles built and published to the mpak registry.
 
-**PR body:**
-```markdown
-## Summary
-- New MCP server for <API name> with <N> tools
-- <N> companion skills for common workflows
+### 7a: Pre-flight Checks
 
-## Server Tools
-- `tool_1` - description
-- ...
+Before committing, verify the release will succeed:
 
-## Skills
-- `skill-1` - description
-- ...
+1. **Version consistency** — Read the version from `manifest.json` and confirm it matches across all version sources:
+   - Python: `pyproject.toml`, `server.json`, `src/mcp_<name>/__init__.py`
+   - TypeScript: run `make sync` and verify no diff
+   If anything is out of sync, run `make bump VERSION=<version>` to fix.
+2. **`mpak.json`** — Must exist in the repo root with `name` matching `manifest.json`. Without it, the registry announce fails silently after the bundle builds.
+3. **No secrets in working tree** — Check for `.env` files or anything containing real API keys. Warn the contributor if found; do not stage them.
+4. **Skills validated** — For each skill in `skills/`, run `mpak skill validate ./skills/<skill-name>` and fix any issues before committing.
 
-## Checklist
-- [ ] 5+ tools implemented
-- [ ] manifest.json valid (v0.4)
-- [ ] Tests passing
-- [ ] CI passing (lint, format, typecheck, test, bundle, scan)
-- [ ] Scanner passes (no critical/high findings)
-- [ ] 2+ companion skills with proper frontmatter
-- [ ] All skills pass `mpak skill validate`
+### 7b: Stage and Commit
+
+Do not use `git add -A`. Review first, then stage explicitly:
+
+1. Run `git status` and show the contributor what will be committed.
+2. Stage server source, tests, skills, manifests, config, and workflow files. Do NOT stage `.env`, credentials, or debug artifacts.
+3. Derive the version from `manifest.json` for the commit message:
+
+```bash
+VERSION=$(jq -r .version manifest.json)
+git add <files...>
+git commit -m "Add <service> MCP server v${VERSION} + companion skills"
 ```
+
+### 7c: Push
+
+Do NOT push on the contributor's behalf. Ask them:
+
+"Push your changes to GitHub: `git push origin main`"
+
+### 7d: Verify CI
+
+After the push, actively monitor CI — don't just point to a URL:
+
+```bash
+gh run list --repo NimbleBrainInc/mcp-<name> --branch main --limit 1
+gh run watch --repo NimbleBrainInc/mcp-<name>
+```
+
+If CI fails: read the logs with `gh run view <run-id> --log-failed`, help the contributor diagnose and fix, then create a new commit (not amend).
+
+### 7e: Cut Release
+
+Once CI passes, derive the tag from `manifest.json`:
+
+```bash
+VERSION=$(jq -r .version manifest.json)
+gh release create "v${VERSION}" --title "v${VERSION}" --generate-notes
+```
+
+### 7f: Monitor Bundle Build
+
+The release triggers `build-bundle.yml` on 3 runners (linux-amd64, linux-arm64, darwin-arm64). Track it:
+
+```bash
+gh run list --repo NimbleBrainInc/mcp-<name> --workflow=build-bundle.yml --limit 1
+gh run watch --repo NimbleBrainInc/mcp-<name>
+```
+
+If a runner fails, check logs with `gh run view <run-id> --log-failed`. Common issues:
+- **Dependency vendor fails** — version conflicts in `pyproject.toml` / `package.json`
+- **mcpb pack fails** — `manifest.json` format issues (re-check against Phase 5a checklist)
+- **OIDC announce fails** — `mpak.json` missing or `name` doesn't match manifest
+
+### 7g: Wrap Up
+
+Once all 3 runners succeed, the server bundle is announced to the mpak registry. Tell the contributor:
+
+"Your `<display>` MCP server is built, bundled, and announced to the mpak registry. It may take several minutes to propagate. Once live, anyone can run it:
+
+```
+mpak run @nimblebraininc/<name>
+```
+
+To check availability:
+```bash
+mpak search <name>
+```
+
+**Note on companion skills:** The skills in `skills/` are committed to your repo but are not included in the `.mcpb` server bundle — skills are distributed separately. Skill publishing from server repos is not yet automated; this will be addressed in a future template update."
 
 ## References
 
@@ -385,6 +531,4 @@ See `references/` in this skill for:
 - `PATTERNS.md` — Complete code patterns, directory structures, CI workflows (Python + TypeScript)
 - `SKILL_FORMAT.md` — Skill frontmatter specification and validation rules
 
-Python templates are also available in `templates/` within this skill folder.
-
-For TypeScript, the canonical patterns are in the `NimbleBrainInc/mcp-server-template-typescript` GitHub template repo — already cloned when the project was created.
+The canonical project structure comes from the GitHub template repos (`NimbleBrainInc/mcp-server-template-python` and `NimbleBrainInc/mcp-server-template-typescript`), cloned and customized during Phase 0 Bootstrap.
