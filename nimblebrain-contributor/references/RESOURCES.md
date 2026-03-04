@@ -49,7 +49,7 @@ to explore the ecosystem before picking what to build, or asks "what's already o
 **URL:** https://docs.mpak.dev
 **Summary:** Full reference documentation for the mpak CLI. Covers all commands:
 `run`, `search`, `pull`, `list`, `config set/get`, version pinning, cache management, and
-offline usage. Also covers the `mpak skill install/validate/pack` commands used for skills.
+offline usage. Also covers `mpak skill` commands for standalone skills (not needed for embedded skill resources in server repos).
 **When to surface:** User wants to know how to use a specific mpak CLI command, asks
 about configuration management, version pinning, or skill installation.
 

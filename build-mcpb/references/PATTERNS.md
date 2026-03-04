@@ -14,7 +14,8 @@
 │   ├── __init__.py
 │   ├── api_models.py
 │   ├── api_client.py
-│   └── server.py
+│   ├── server.py
+│   └── SKILL.md         ← embedded skill resource
 ├── tests/
 │   ├── __init__.py
 │   └── test_api_models.py
@@ -77,6 +78,7 @@ dev = [
 import logging
 import os
 import sys
+from importlib.resources import files
 
 from fastmcp import Context, FastMCP
 from starlette.requests import Request
@@ -92,9 +94,20 @@ logging.basicConfig(
 )
 logger = logging.getLogger("mcp_<name>")
 
-mcp = FastMCP("<Service>")
+SKILL_CONTENT = files("mcp_<name>").joinpath("SKILL.md").read_text()
+
+mcp = FastMCP(
+    "<Service>",
+    instructions="Read the skill resource at skill://<name>/usage before using tools.",
+)
 
 _client: Client | None = None
+
+
+@mcp.resource("skill://<name>/usage")
+def get_skill() -> str:
+    """Tool selection guide and workflow patterns for this server."""
+    return SKILL_CONTENT
 
 
 def get_client(ctx: Context | None = None) -> Client:
@@ -451,6 +464,7 @@ make bundle                          # Vendor deps + mcpb pack (local bundle)
 │   ├── types.ts              # Zod schemas for API responses
 │   ├── schemas.ts            # Zod schemas for tool inputs
 │   ├── formatters.ts         # Strip noisy API fields before returning
+│   ├── SKILL.md              # Embedded skill resource
 │   ├── handlers/             # One file per tool
 │   │   └── <tool>.ts
 │   └── utils/
@@ -488,13 +502,15 @@ make bundle                          # Vendor deps + mcpb pack (local bundle)
 8. `src/constants.ts` — set SERVER_NAME only (version managed by `make sync`)
 9. `manifest.json` + `server.json` — fill all TODO fields; run `make sync`
 10. `tests/` — fixtures + tests
-11. `skills/` — one SKILL.md per workflow
+11. `src/SKILL.md` — embedded skill resource (tool selection, workflows)
 
 ### index.ts (Entry Point)
 
 ```typescript
 #!/usr/bin/env node
 
+import { readFileSync } from "fs";
+import { join } from "path";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { loadConfig } from "./config.js";
@@ -504,13 +520,21 @@ import { ApiClient } from "./utils/apiClient.js";
 import { MyInputSchema } from "./schemas.js";
 import { myHandler } from "./handlers/myHandler.js";
 
+const SKILL_CONTENT = readFileSync(join(__dirname, "SKILL.md"), "utf-8");
+
 const config = loadConfig();
 const client = new ApiClient(config.apiKey);
 
 const server = new McpServer({
   name: SERVER_NAME,
   version: VERSION,
+  instructions: "Read the skill resource at skill://<name>/usage before using tools.",
 });
+
+// Skill resource
+server.resource("skill-usage", "skill://<name>/usage", async (uri) => ({
+  contents: [{ uri: uri.href, text: SKILL_CONTENT, mimeType: "text/markdown" }],
+}));
 
 // Tool registration
 server.registerTool(
@@ -777,7 +801,10 @@ README.md
 *.png
 *.security-report.json
 !package-lock.json
+!build/SKILL.md
 ```
+
+> **Note:** The `*.md` and `src/` exclusions would prevent the embedded SKILL.md from being bundled. The `!build/SKILL.md` negation overrides both. The Makefile `build` target must include `cp src/SKILL.md build/SKILL.md` so the file is available at the expected path.
 
 ### CI Workflows (TypeScript)
 
