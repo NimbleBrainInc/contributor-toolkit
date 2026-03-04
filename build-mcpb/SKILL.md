@@ -1,6 +1,6 @@
 ---
 name: build-mcpb
-description: Build MCP servers end-to-end. Scaffolds a production-ready Python or TypeScript server from API documentation, implements tools, validates the MCPB bundle, authors companion skills, and guides release to the mpak registry. Covers the full lifecycle from API analysis to published bundle. Use when building a new MCP server, wrapping an API, or creating an integration. Triggers include "build an MCP server", "create a server for X", "/build-mcpb".
+description: Build MCP servers end-to-end. Scaffolds a production-ready Python or TypeScript server from API documentation, implements tools, validates the MCPB bundle, creates an embedded skill resource, and guides release to the mpak registry. Covers the full lifecycle from API analysis to published bundle. Use when building a new MCP server, wrapping an API, or creating an integration. Triggers include "build an MCP server", "create a server for X", "/build-mcpb".
 license: Apache-2.0
 compatibility: Python 3.13+, uv, ruff, ty OR Node.js 24+, npm. Docker, mpak CLI. Claude Code or Codex with filesystem access.
 allowed-tools: Read Write Bash Glob Grep WebFetch AskUserQuestion
@@ -11,7 +11,7 @@ metadata:
     - mcpb
     - api
     - scaffolding
-    - skills
+    - skill-resource
     - typescript
   category: development
   triggers:
@@ -31,7 +31,7 @@ metadata:
     - node
     - zod
     - vitest
-    - skill-generation
+    - embedded-skill
   version: "0.1.0"
   surfaces:
     - claude-code
@@ -48,7 +48,7 @@ metadata:
 
 # Build MCPB
 
-Build MCP servers end-to-end: scaffold from API docs, implement tools, validate the bundle, author companion skills, and release to the mpak registry. Supports Python (FastMCP) and TypeScript (@modelcontextprotocol/sdk).
+Build MCP servers end-to-end: scaffold from API docs, implement tools, validate the bundle, create an embedded skill resource, and release to the mpak registry. Supports Python (FastMCP) and TypeScript (@modelcontextprotocol/sdk).
 
 ## Quick Start
 
@@ -67,7 +67,7 @@ Phase 2: Scaffold         Verify project structure from template
 Phase 3: Implement        Write tool logic, models, client
 Phase 4: Verify           Lint, typecheck, test
 Phase 5: Validate Bundle  Manifest, build, bundle, MTF scan, runtime
-Phase 6: Author Skills    Generate 2-3 companion skills
+Phase 6: Embed Skill      Create in-package skill resource
 Phase 7: Release          Commit, push, cut release, verify bundle
 ```
 
@@ -301,7 +301,7 @@ See `references/PATTERNS.md` → "TypeScript Server Patterns" for complete code 
 - Use `.js` extensions in all imports (Node ESM requirement)
 - Never edit `src/constants.ts` manually — use `make sync`
 - Never edit `.github/workflows/` — shared infrastructure
-- Skills created must be **self-contained** in a single `SKILL.md` (no `references/` subdirectory)
+- The embedded SKILL.md lives in `src/` and is copied to `build/` during compilation
 
 ## Phase 4: Verify
 
@@ -387,55 +387,116 @@ printf '{"jsonrpc":"2.0","method":"initialize","id":1,"params":{"protocolVersion
 
 Both: server responds with valid JSON-RPC `initialize` result followed by `tools/list` result. No garbage on stdout (logs go to stderr).
 
-## Phase 6: Author Companion Skills
+## Phase 6: Embed Skill Resource
 
-1. **Analyze the server's tools**:
-   - **Python:** Extract all `@mcp.tool()` functions from `server.py`
-   - **TypeScript:** Extract all `server.registerTool()` calls from `src/index.ts`
+### 6a: Analyze Tools
 
-2. **Suggest 3-5 skills** based on tool composition patterns:
+Extract the server's tool surface:
+- **Python:** Extract all `@mcp.tool()` functions from `server.py`
+- **TypeScript:** Extract all `server.registerTool()` calls from `src/index.ts`
 
-| Pattern | Description | Example |
-|---------|-------------|---------|
-| **Daily digest** | Aggregate + summarize | "Summarize today's updates" |
-| **Creator** | Structured content from input | "Create meeting notes from transcript" |
-| **Organizer** | Categorize + file items | "Sort docs into databases" |
-| **Reporter** | Pull data + format report | "Weekly pipeline status report" |
-| **Monitor** | Check conditions + alert | "Flag stale deals" |
-| **Enricher** | Augment data with context | "Enrich contacts with company info" |
+### 6b: Draft SKILL.md
 
-3. **Present suggestions** to user for selection
+Generate a **draft** embedded skill file:
+- **Python:** `src/mcp_<name>/SKILL.md`
+- **TypeScript:** `src/SKILL.md`
 
-4. **Generate each skill** as a directory:
+No frontmatter — this is pure Markdown. The draft should contain:
 
-**Python servers:**
+1. **Tool selection table** — each tool with a one-line description and when to use it
+2. **Context reuse rules** — which tool outputs feed into subsequent calls
+3. **Multi-step workflow patterns** — 2–3 composed workflows showing how to chain tools
+
+Example structure:
+```markdown
+# <Service> MCP Server — Skill Guide
+
+## Tools
+
+| Tool | Use when... |
+|------|-------------|
+| `list_items` | You need to browse or search items |
+| `get_item` | You have an item ID and need full details |
+| `create_item` | You need to create a new item |
+
+## Context Reuse
+
+- Use the `id` from `list_items` results when calling `get_item`
+- Use the `id` from `create_item` response for follow-up `get_item` calls
+
+## Workflows
+
+### 1. Inventory Check
+1. `list_items` with category filter
+2. For each item: `get_item` to get full details
+3. Summarize findings
+
+### 2. Create and Verify
+1. `create_item` with required fields
+2. `get_item` with the returned ID to confirm creation
 ```
-skills/<skill-name>/
-├── SKILL.md
-└── references/
-    └── SERVER_TOOLS.md
+
+### 6c: Review with Contributor
+
+The embedded skill created so far is inherently opinionated — it shapes how an LLM uses the server. The contributor understands the target API's nuances better than this pipeline can: which tool combinations are most valuable, what context flows are non-obvious, and what real workflows users will care about.
+
+**Show the draft to the contributor and ask for their input.** Present the full SKILL.md content and ask:
+
+```
+=> Here's the draft embedded skill for your server:
+
+   [show SKILL.md content]
+
+=> This guides how an LLM will select and compose your tools. Consider:
+   - Are the right workflows represented?
+   - Are there tool combinations or sequencing patterns you'd add?
+   - Any context reuse rules that aren't obvious from the tool signatures?
+   - Should any workflows be removed or reframed?
+
+=> Let me know what to change, or approve to continue.
 ```
 
-**TypeScript servers:**
-```
-skills/<skill-name>/
-└── SKILL.md              # Self-contained — no subdirectories
-```
+Iterate with the contributor until they approve the SKILL.md. This may involve multiple rounds — the contributor might add domain-specific workflows, adjust tool selection guidance, or refine context reuse rules that only someone familiar with the API would know.
 
-5. **Validate each skill:**
+Do **not** proceed to wiring (6d) until the contributor has explicitly approved the skill content.
+
+### 6d: Wire the Resource
+
+**Python:** Add to `server.py`:
+- `from importlib.resources import files` import
+- `SKILL_CONTENT = files("mcp_<name>").joinpath("SKILL.md").read_text()`
+- `instructions=` parameter on `FastMCP(...)` constructor
+- `@mcp.resource("skill://<name>/usage")` decorated function returning `SKILL_CONTENT`
+
+**TypeScript:** Add to `src/index.ts`:
+- `import { readFileSync } from "fs"` and `import { join } from "path"`
+- `const SKILL_CONTENT = readFileSync(join(__dirname, "SKILL.md"), "utf-8")`
+- `instructions` in `McpServer` constructor
+- `server.resource("skill-usage", "skill://<name>/usage", ...)` registration
+
+**TypeScript bundling:** Since `.mcpbignore` excludes both `src/` and `*.md`:
+1. Add to Makefile `build` target: `cp src/SKILL.md build/SKILL.md`
+2. Add to `.mcpbignore`: `!build/SKILL.md`
+
+See `references/PATTERNS.md` for complete wiring examples in both languages.
+
+### 6e: Verify
+
+Run MCP runtime validation (same as Phase 5e) and confirm `resources/list` includes `skill://<name>/usage`:
+
+**Python:**
 ```bash
-mpak skill validate ./skills/<skill-name>
-mpak skill pack ./skills/<skill-name>
+printf '{"jsonrpc":"2.0","method":"initialize","id":1,"params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"test","version":"0.1.0"}}}\n{"jsonrpc":"2.0","method":"notifications/initialized"}\n{"jsonrpc":"2.0","method":"resources/list","id":2}\n' | uv run python -m mcp_<name>.server 2>/dev/null
 ```
 
-### Skill Quality Checklist
+**TypeScript:**
+```bash
+printf '{"jsonrpc":"2.0","method":"initialize","id":1,"params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"test","version":"0.1.0"}}}\n{"jsonrpc":"2.0","method":"notifications/initialized"}\n{"jsonrpc":"2.0","method":"resources/list","id":2}\n' | node build/index.js --stdio 2>/dev/null
+```
 
-- [ ] Composes 2+ tools (not a single-tool wrapper)
-- [ ] Clear trigger (when would someone use this?)
-- [ ] Specific tool names from the server
-- [ ] Output format defined
-- [ ] Example included
-- [ ] Declares server dependency in compatibility
+The response should include a resource with `uri: "skill://<name>/usage"`.
+
+> **Note:** The embedded skill is encouraged but not mandatory per mpak spec. If no meaningful workflows exist yet (e.g., the server has only 1–2 tools), it's acceptable to skip this phase and add the skill later.
 
 ## Phase 7: Release
 
@@ -451,7 +512,7 @@ Before committing, verify the release will succeed:
    If anything is out of sync, run `make bump VERSION=<version>` to fix.
 2. **`mpak.json`** — Must exist in the repo root with `name` matching `manifest.json`. Without it, the registry announce fails silently after the bundle builds.
 3. **No secrets in working tree** — Check for `.env` files or anything containing real API keys. Warn the contributor if found; do not stage them.
-4. **Skills validated** — For each skill in `skills/`, run `mpak skill validate ./skills/<skill-name>` and fix any issues before committing.
+4. **Skill resource wired** — Verify SKILL.md exists at the expected path (`src/mcp_<name>/SKILL.md` for Python, `src/SKILL.md` for TypeScript) and the resource is registered in server code.
 
 ### 7b: Stage and Commit
 
@@ -464,7 +525,7 @@ Do not use `git add -A`. Review first, then stage explicitly:
 ```bash
 VERSION=$(jq -r .version manifest.json)
 git add <files...>
-git commit -m "Add <service> MCP server v${VERSION} + companion skills"
+git commit -m "Add <service> MCP server v${VERSION}"
 ```
 
 ### 7c: Push
@@ -522,13 +583,11 @@ To check availability:
 mpak search <name>
 ```
 
-**Note on companion skills:** The skills in `skills/` are committed to your repo but are not included in the `.mcpb` server bundle — skills are distributed separately. Skill publishing from server repos is not yet automated; this will be addressed in a future template update."
-
 ## References
 
 See `references/` in this skill for:
 - `CONVENTIONS.md` — Naming, manifest format, versioning, build system, entry points (Python + TypeScript)
 - `PATTERNS.md` — Complete code patterns, directory structures, CI workflows (Python + TypeScript)
-- `SKILL_FORMAT.md` — Skill frontmatter specification and validation rules
+- `SKILL_FORMAT.md` — Embedded skill resource format and wiring patterns
 
 The canonical project structure comes from the GitHub template repos (`NimbleBrainInc/mcp-server-template-python` and `NimbleBrainInc/mcp-server-template-typescript`), cloned and customized during Phase 0 Bootstrap.

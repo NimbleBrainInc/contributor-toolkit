@@ -58,7 +58,7 @@ If the user arrived with a clear intent already stated (e.g. "file an issue for 
 ### Path A: Finding Work
 
 Browse issues immediately — do not orient upfront. One sentence of context is enough:
-"NimbleBrain contributions are MCP servers — integrations that connect AI assistants to real services. Each ships with companion skills."
+"NimbleBrain contributions are MCP servers — integrations that connect AI assistants to real services. Each includes an embedded skill resource for tool selection guidance."
 
 Then run:
 
@@ -225,4 +225,3 @@ At natural pauses, offer a next step without pushing:
 - `ECOSYSTEM.md` - Layered overview of MCP, MCPB, mpak, Skills, and NimbleBrain platform
 - `RESOURCES.md` - Curated resource list with summaries and links, organized by ecosystem layer
 - `DEV_SETUP.md` - Full environment setup instructions
-- `PIPELINE.md` - End-to-end build-validate-author-publish pipeline reference

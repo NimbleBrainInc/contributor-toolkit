@@ -1,53 +1,76 @@
-# Skill Format Quick Reference
+# Embedded Skill Resource Format
 
-## Directory Structure
+## Overview
 
+An embedded skill resource is a single `SKILL.md` file that lives **inside** the MCP server package and is exposed as an MCP resource at `skill://<name>/usage`. It is NOT a standalone artifact — there is no frontmatter, no `mpak skill validate`, and no separate distribution step. The skill ships automatically with the `.mcpb` bundle.
+
+## File Location
+
+| Language | Path |
+|----------|------|
+| Python | `src/mcp_<name>/SKILL.md` |
+| TypeScript | `src/SKILL.md` |
+
+## Content Structure
+
+The file is pure Markdown (no YAML frontmatter). It should contain:
+
+1. **Tool selection table** — lists each tool with a one-line description and when to use it
+2. **Context reuse rules** — which tool outputs to feed into subsequent calls (e.g., "use the `id` from `list_items` when calling `get_item`")
+3. **Multi-step workflow patterns** — 2–3 composed workflows showing how to chain tools for real tasks
+
+## Wiring Patterns
+
+### Python (FastMCP)
+
+```python
+from importlib.resources import files
+
+SKILL_CONTENT = files("mcp_<name>").joinpath("SKILL.md").read_text()
+
+mcp = FastMCP(
+    "<Service>",
+    instructions="Read the skill resource at skill://<name>/usage before using tools.",
+)
+
+@mcp.resource("skill://<name>/usage")
+def get_skill() -> str:
+    """Tool selection guide and workflow patterns for this server."""
+    return SKILL_CONTENT
 ```
-my-skill/
-├── SKILL.md              # Required: frontmatter + instructions
-├── scripts/              # Optional: executable code
-├── references/           # Optional: supplementary docs
-└── assets/               # Optional: static resources
+
+### TypeScript (@modelcontextprotocol/sdk)
+
+```typescript
+import { readFileSync } from "fs";
+import { join } from "path";
+
+const SKILL_CONTENT = readFileSync(join(__dirname, "SKILL.md"), "utf-8");
+
+const server = new McpServer({
+  name: SERVER_NAME,
+  version: VERSION,
+  instructions: "Read the skill resource at skill://<name>/usage before using tools.",
+});
+
+server.resource("skill-usage", "skill://<name>/usage", async (uri) => ({
+  contents: [{ uri: uri.href, text: SKILL_CONTENT, mimeType: "text/markdown" }],
+}));
 ```
 
-## Required Frontmatter
+### TypeScript Bundling Note
 
-| Field | Constraints |
-|-------|-------------|
-| `name` | 1-64 chars, lowercase alphanumeric + hyphens, must match directory name |
-| `description` | 1-1024 chars, third person, what it does AND when to use it |
+The `.mcpbignore` excludes both `src/` and `*.md`, so the SKILL.md must be copied during build:
 
-## Optional Frontmatter
+1. **Makefile** — add a copy step to the `build` target: `cp src/SKILL.md build/SKILL.md`
+2. **`.mcpbignore`** — add `!build/SKILL.md` to override the `*.md` exclusion
 
-| Field | Description |
-|-------|-------------|
-| `license` | License identifier (e.g., MIT, Apache-2.0) |
-| `compatibility` | Environment requirements (max 500 chars) |
-| `allowed-tools` | Space-delimited tool list (e.g., "Read Write Bash") |
+At runtime, `readFileSync(join(__dirname, "SKILL.md"))` works because `__dirname` resolves to `build/`.
 
-## Discovery Metadata (via `metadata:`)
+## Quality Checklist
 
-| Field | Type | Constraints |
-|-------|------|-------------|
-| `tags` | string[] | Max 10 tags, each max 32 chars |
-| `category` | enum | development, writing, research, consulting, data, design, operations, security, other |
-| `triggers` | string[] | Max 20, each max 128 chars |
-| `keywords` | string[] | Max 30, each max 32 chars |
-| `version` | string | Semver (required for registry publishing) |
-| `surfaces` | enum[] | claude-code, claude-api, claude-ai |
-| `author` | object | {name (required), url, email} |
-| `examples` | object[] | Max 5, each has prompt (required) and context (optional) |
-
-## Naming Convention
-
-Scoped names for registry: `@scope/skill-name`
-- Scope matches GitHub org (e.g., `@nimblebraininc/`)
-- Lowercase alphanumeric + hyphens only
-
-## Validation and Publishing
-
-```bash
-mpak skill validate ./my-skill     # Validate
-mpak skill pack ./my-skill         # Create .skill bundle
-# Publishing happens via GitHub Actions (skill-pack action)
-```
+- [ ] Covers all tools exposed by the server
+- [ ] Composes 2+ tools per workflow pattern
+- [ ] Context reuse specified (which outputs feed into which inputs)
+- [ ] Resource URI matches `skill://<name>/usage`
+- [ ] Server `instructions` parameter directs the LLM to read the skill resource

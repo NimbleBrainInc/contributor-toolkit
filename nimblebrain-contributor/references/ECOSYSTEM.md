@@ -144,15 +144,17 @@ Cold start (first run): ~2–5 seconds. Warm start (cached): milliseconds.
 MCP server exposes raw tools (e.g., `create_invoice`, `list_customers`), a skill composes
 those tools into a complete workflow (e.g., "onboard a new customer end-to-end").
 
+In the embedded model, each MCP server contains a single `SKILL.md` file inside the
+server package, exposed as an MCP resource at `skill://<name>/usage`. The server's
+`instructions` parameter tells the LLM to read the skill resource before using tools.
+
 Skills are:
-- Markdown files (`SKILL.md`) with a YAML frontmatter header + instruction body
-- Installed into Claude Code via `mpak skill install @scope/skill-name`
-- Triggered by natural language phrases the user types
+- A single Markdown file (`SKILL.md`) — no frontmatter, no separate validation
+- Embedded inside the server package (`src/mcp_<name>/SKILL.md` for Python, `src/SKILL.md` for TypeScript)
+- Exposed as an MCP resource the LLM reads automatically
+- Shipped with the `.mcpb` bundle — always version-consistent with the server
 
-Every NimbleBrain MCP server ships with 2–3 companion skills that demonstrate
-real workflows. Contributors build both.
-
-> **Resources:** See `RESOURCES.md` → *mpak CLI Documentation* (skill install/validate/pack)
+> **Resources:** See `RESOURCES.md` → *mpak CLI Documentation*
 
 ---
 
@@ -182,11 +184,9 @@ mcp-<service>/
 # if Python
 ├── src/mcp_<service>/
 │   ├── server.py        ← FastMCP server with 5+ tools
-│   └── api_client.py    ← async HTTP client for the target API
+│   ├── api_client.py    ← async HTTP client for the target API
+│   └── SKILL.md         ← embedded skill resource
 ├── tests/
-├── skills/
-│   ├── <workflow-1>/SKILL.md
-│   └── <workflow-2>/SKILL.md
 ├── .github/workflows/
 │   ├── ci.yml           ← lint + test + bundle on every push
 │   ├── scan.yml         ← MTF security scan on every push
@@ -199,10 +199,9 @@ mcp-<service>/
 # if TypeScript
 ├── src/
 │   ├── index.ts         ← MCP server entry point, registers all tools
-│   └── utils/apiClient.ts ← async HTTP client for the target API
+│   ├── utils/apiClient.ts ← async HTTP client for the target API
+│   └── SKILL.md         ← embedded skill resource
 ├── tests/
-├── skills/
-│   └── <workflow>/SKILL.md
 ├── .github/workflows/
 │   ├── ci.yml           ← lint + test + bundle on every push
 │   ├── scan.yml         ← MTF security scan on every push
