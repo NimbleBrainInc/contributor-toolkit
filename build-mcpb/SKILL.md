@@ -402,19 +402,24 @@ Extract the server's tool surface:
 
 ### 6b: Draft SKILL.md
 
-Generate a **draft** embedded skill file:
+Generate a **draft** embedded skill file - or edit the generic scaffolded one, if it exists:
 - **Python:** `src/mcp_<name>/SKILL.md`
 - **TypeScript:** `src/SKILL.md`
 
-No frontmatter — this is pure Markdown. The draft should contain:
+The draft should contain:
 
 1. **Tool selection table** — each tool with a one-line description and when to use it
 2. **Context reuse rules** — which tool outputs feed into subsequent calls
 3. **Multi-step workflow patterns** — 2–3 composed workflows showing how to chain tools
 
+The frontmatter should contain the name and description of the skill. 
+
 Example structure:
 ```markdown
-# <Service> MCP Server — Skill Guide
+---
+name: mcp-<name>-service
+description: Provides knowledge of how to use MCP <name> most effectivelly. It's loaded into the agent's context when running the MCP. 
+---
 
 ## Tools
 
@@ -443,7 +448,7 @@ Example structure:
 
 ### 6c: Review with Contributor
 
-The embedded skill created so far is inherently opinionated — it shapes how an LLM uses the server. The contributor understands the target API's nuances better than this pipeline can: which tool combinations are most valuable, what context flows are non-obvious, and what real workflows users will care about.
+The embedded skill created so far is inherently unopinionated — it was created generically based on common knowledge and basic patterns. The contributor might have a specific idea of how t use the MCP already in mind though. So it's important to make this Step 6 interactive and request confirmation before moving on to the next Step.
 
 **Show the draft to the contributor and ask for their input.** Present the full SKILL.md content and ask:
 
@@ -458,7 +463,7 @@ The embedded skill created so far is inherently opinionated — it shapes how an
    - Any context reuse rules that aren't obvious from the tool signatures?
    - Should any workflows be removed or reframed?
 
-=> Let me know what to change, or approve to continue.
+=> Let me know if it needs change, or approve to continue.
 ```
 
 Iterate with the contributor until they approve the SKILL.md. This may involve multiple rounds — the contributor might add domain-specific workflows, adjust tool selection guidance, or refine context reuse rules that only someone familiar with the API would know.
