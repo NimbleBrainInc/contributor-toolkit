@@ -247,6 +247,7 @@ Phase 0 created the repo from template and customized all placeholders. Verify i
 - `tests/`
 - `manifest.json`, `server.json`, `pyproject.toml`, `Makefile`
 - `.github/workflows/ci.yml`, `.github/workflows/build-bundle.yml`
+- `.gitignore`, `.mcpbignore`
 
 **TypeScript** — check that these exist:
 - `src/index.ts`, `config.ts`, `constants.ts`, `types.ts`, `schemas.ts`, `formatters.ts`
@@ -254,8 +255,11 @@ Phase 0 created the repo from template and customized all placeholders. Verify i
 - `tests/`
 - `manifest.json`, `server.json`, `package.json`, `tsconfig.json`, `Makefile`
 - `.github/workflows/ci.yml`, `.github/workflows/build-bundle.yml`
+- `.gitignore`, `.mcpbignore`
 
 If any files are missing, create them following the patterns in `references/PATTERNS.md`.
+
+> **Fallback:** If `.gitignore` is missing (e.g., manual repo without template), generate it using the canonical content from `references/PATTERNS.md`. This prevents build artifacts (`bundle/`, `deps/`, `*.mcpb`), scanner reports, and secrets from being committed.
 
 See `references/PATTERNS.md` for full directory structure reference.
 
