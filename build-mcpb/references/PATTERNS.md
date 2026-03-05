@@ -31,6 +31,76 @@
 └── README.md
 ```
 
+### .gitignore (Python)
+
+```
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+build/
+dist/
+*.egg-info/
+.Python
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Type checking
+.mypy_cache/
+.dmypy.json
+.pytype/
+
+# Linting
+.ruff_cache/
+
+# IDEs
+.idea/
+.vscode/
+*.code-workspace
+
+# OS
+.DS_Store
+Thumbs.db
+
+# MCP/Claude
+.claude/
+
+# Package managers
+uv.lock
+.uv/
+poetry.lock
+Pipfile.lock
+
+# Secrets
+*.key
+*.pem
+credentials.json
+.secrets/
+
+# Local development
+test_quick.py
+
+# MCPB bundles
+bundle/
+deps/
+*.mcpb
+
+# Scanner reports
+security-report.json
+```
+
 ### pyproject.toml
 
 ```toml
@@ -488,6 +558,58 @@ make bundle                          # Vendor deps + mcpb pack (local bundle)
 ├── server.json               # Registry metadata
 ├── tsconfig.json
 └── vitest.config.ts
+```
+
+### .gitignore (TypeScript)
+
+```
+# Node
+node_modules/
+build/
+dist/
+*.tgz
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# IDEs
+.vscode/
+.idea/
+*.code-workspace
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Claude
+.claude/
+
+# Testing
+coverage/
+.nyc_output/
+
+# MCPB bundles
+bundle/
+deps/
+*.mcpb
+
+# Scanner reports
+security-report.json
+.scan-results.json
+
+# Secrets
+*.key
+*.pem
+credentials.json
+.secrets/
+
+# Temp files
+tmp/
+temp/
+*.tmp
+*.swp
 ```
 
 ### Implementation Order
