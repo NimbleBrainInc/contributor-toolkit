@@ -210,7 +210,7 @@ Present the results clearly — summarize what's open, what's recently closed, a
 After presenting, offer a natural next step:
 "Want to pick up something new, or jump back into what you were building?"
 
-If new work → Path A. If continuing a build → tell them to type /build-mcpb to pick up where they left off.
+If new work → Path A. If continuing a build → invoke `/build-mcpb` in this same session to pick up where they left off.
 
 ### Path D: Exploring the Ecosystem
 
