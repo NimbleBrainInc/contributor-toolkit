@@ -540,9 +540,11 @@ git commit -m "Add <service> MCP server v${VERSION}"
 
 ### 7c: Push
 
-Do NOT push on the contributor's behalf. Ask them:
+Ask the contributor to push the changes:
 
 "Push your changes to GitHub: `git push origin main`"
+
+You may only do that on the contributor's behalf if they give explicit consent.
 
 ### 7d: Verify CI
 
