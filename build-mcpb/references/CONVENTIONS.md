@@ -2,7 +2,7 @@
 
 ## Critical
 
-Package names MUST be scoped: `@nimblebraininc/<name>`
+Package names MUST be scoped: `@<github_owner>/<name>`
 
 Name must match the registry regex: `/^@[a-z0-9][a-z0-9-]{0,38}\/[a-z0-9][a-z0-9-]{0,213}$/`
 
@@ -12,7 +12,7 @@ Registry rejects other formats (e.g., `ai.nimbletools/name`, uppercase, undersco
 
 | Aspect | Python | TypeScript |
 |--------|--------|------------|
-| Package scope | `@nimblebraininc/<name>` | `@nimblebraininc/<name>` |
+| Package scope | `@<github_owner>/<name>` | `@<github_owner>/<name>` |
 | Module / package | `mcp_<name>` (underscores) | `mcp-<name>` (hyphens) |
 | Source directory | `src/mcp_<name>/` | `src/` |
 | Environment variable | `<NAME>_API_KEY` | `<NAME>_API_KEY` |
@@ -52,7 +52,7 @@ Required for package claiming on the mpak registry. Must exist in the repo root:
 
 ```json
 {
-  "name": "@nimblebraininc/<name>",
+  "name": "@<github_owner>/<name>",
   "maintainers": ["<github-username>"]
 }
 ```
@@ -64,7 +64,7 @@ The `name` field must exactly match the `name` in `manifest.json`.
 ```json
 {
   "manifest_version": "0.4",
-  "name": "@nimblebraininc/<name>",
+  "name": "@<github_owner>/<name>",
   "version": "0.1.0",
   "description": "...",
   "author": { "name": "NimbleBrain Inc" },
@@ -115,7 +115,7 @@ Never use file paths (`${__dirname}/...`) for Python — breaks after bundling.
 ```json
 {
   "manifest_version": "0.4",
-  "name": "@nimblebraininc/<name>",
+  "name": "@<github_owner>/<name>",
   "display_name": "<Display Name>",
   "version": "0.1.0",
   "description": "...",
@@ -125,7 +125,7 @@ Never use file paths (`${__dirname}/...`) for Python — breaks after bundling.
   "keywords": [],
   "repository": {
     "type": "git",
-    "url": "https://github.com/NimbleBrainInc/mcp-<name>"
+    "url": "https://github.com/<github_owner>/mcp-<name>"
   },
   "compatibility": {
     "platforms": ["darwin", "linux", "win32"],
@@ -200,13 +200,13 @@ All servers (Python and TypeScript) require a `server.json` for registry metadat
 ```json
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
-  "name": "io.nimblebrain/<name>",
+  "name": "io.<github_owner>/<name>",
   "title": "<Display Name>",
   "description": "...",
   "version": "0.1.0",
-  "websiteUrl": "https://nimblebrain.ai",
+  "websiteUrl": "https://github.com/<github_owner>",
   "repository": {
-    "url": "https://github.com/NimbleBrainInc/mcp-<name>",
+    "url": "https://github.com/<github_owner>/mcp-<name>",
     "source": "github"
   },
   "packages": [
@@ -252,7 +252,7 @@ All servers (Python and TypeScript) require a `server.json` for registry metadat
 |-------|--------|------------|
 | `registryType[1]` | `pypi` | `npm` |
 | `registryBaseUrl` | `https://pypi.org` | `https://registry.npmjs.org` |
-| `identifier` | `mcp-<name>` | `@nimblebraininc/<name>` |
+| `identifier` | `mcp-<name>` | `@<github_owner>/<name>` |
 
 ## Entry Points
 

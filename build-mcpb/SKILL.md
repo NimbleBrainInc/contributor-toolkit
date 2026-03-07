@@ -90,6 +90,7 @@ If cold start, verify the basics before proceeding:
 1. **gh CLI** — `gh auth status` succeeds
 2. **Language toolchain** — Python: `uv --version`, `ruff --version`, `ty --version`; TypeScript: `node --version`, `npm --version`
 3. **mpak CLI** — `mpak --version` succeeds
+4. **GitHub owner** — detect via `gh api user --jq .login` and store as `<github_owner>`. Confirm with the user: "Publishing as `<github_owner>` — correct?"
 
 If any check fails, tell the contributor what's missing and point them to `~/.claude/skills/nimblebrain-contributor/references/DEV_SETUP.md` for setup instructions. Don't block on optional tools (e.g., mpak-scanner) — just note they're unavailable and skip the phases that need them.
 
@@ -106,7 +107,7 @@ If any check fails, tell the contributor what's missing and point them to `~/.cl
 
 - **Warm start:** Use the service name from the conversation context.
 - **Cold start:**
-  1. If `manifest.json` exists, parse the `name` field and strip the scope: `@nimblebraininc/<name>` → `<name>`
+  1. If `manifest.json` exists, parse the `name` field and strip the scope: `@<scope>/<name>` → `<name>`
   2. Otherwise, derive from the directory name: strip `mcp-` prefix (e.g., `mcp-stripe` → `stripe`)
   3. If neither works, ask the user
 
@@ -120,12 +121,13 @@ Derive these values from `<name>` (the service name):
 | `<Name>` (PascalCase) | `Jsonplaceholder` |
 | `<NAME>` (UPPER_SNAKE) | `JSONPLACEHOLDER` |
 | `<display>` (human-readable) | Ask the user, e.g. "JSONPlaceholder" |
+| `<github_owner>` | Detected in Phase 0b via `gh api user --jq .login` |
 
 Language-specific derived names:
 
 | Variable | Python | TypeScript |
 |----------|--------|------------|
-| Package scope | `@nimblebraininc/<name>` | `@nimblebraininc/<name>` |
+| Package scope | `@<github_owner>/<name>` | `@<github_owner>/<name>` |
 | Module / package | `mcp_<name>` (underscores) | `mcp-<name>` (hyphens) |
 | Source directory | `src/mcp_<name>/` | `src/` |
 | Env var | `<NAME>_API_KEY` | `<NAME>_API_KEY` |
@@ -139,19 +141,19 @@ Otherwise:
 1. Make sure the user is outside of any existing git repo. If they aren't, help them navigate to a suitable directory first.
 
 2. Confirm before running:
-   "This will create a public repo at `NimbleBrainInc/mcp-<name>` on GitHub. Ready to go?"
+   "This will create a public repo at `<github_owner>/mcp-<name>` on GitHub. Ready to go?"
 
 3. Once confirmed:
 
    Python:
    ```bash
-   gh repo create NimbleBrainInc/mcp-<name> \
+   gh repo create <github_owner>/mcp-<name> \
      --template NimbleBrainInc/mcp-server-template-python --public --clone
    ```
 
    Node / TypeScript:
    ```bash
-   gh repo create NimbleBrainInc/mcp-<name> \
+   gh repo create <github_owner>/mcp-<name> \
      --template NimbleBrainInc/mcp-server-template-typescript --public --clone
    ```
 
@@ -166,7 +168,7 @@ Otherwise:
 2. Replace across all files (`*.py`, `*.toml`, `*.json`, `*.md`, `Makefile`, `.env.example`):
    - `mcp_example` → `mcp_<name>` (package name in imports, paths, logger)
    - `mcp-example` → `mcp-<name>` (project/bundle name)
-   - `@nimblebraininc/example` → `@nimblebraininc/<name>` (registry identifier)
+   - `@nimblebraininc/example` → `@<github_owner>/<name>` (registry identifier)
    - `ExampleClient` → `<Name>Client` (class name)
    - `ExampleAPIError` → `<Name>APIError` (class name)
    - `EXAMPLE_API_KEY` → `<NAME>_API_KEY` (env var)
@@ -187,7 +189,7 @@ Replace across all files (`*.ts`, `*.json`, `*.md`, `Makefile`, `CLAUDE.md`):
    - `YOUR_API_KEY_ENV_VAR` → `<NAME>_API_KEY`
    - `YOUR_API_HOST` → leave as TODO for Phase 3
    - `YOUR_API_BASE_URL` → leave as TODO for Phase 3
-   - `YOUR_GITHUB_USERNAME` → look up via `gh api user -q .login`
+   - `YOUR_GITHUB_USERNAME` → `<github_owner>` (already detected in Phase 0b)
    - `YOUR_SERVICE` → `<display>`
 
 After substitutions, do a quick sanity check — grep for any remaining `example`/`Example`/`EXAMPLE` (Python) or `YOUR_` (TypeScript) across the project. If any remain, fix them. Then confirm to the user: "Template customized — all placeholder names replaced with `<name>`."
@@ -206,7 +208,7 @@ Show bootstrap summary and ask the user to confirm before proceeding. Skip this 
    Service: <name>
    Module: <module>
    Env var: <NAME>_API_KEY
-   Repo: NimbleBrainInc/mcp-<name>
+   Repo: <github_owner>/mcp-<name>
 
 => Ready to start the build pipeline? [Y/n]
 ```
@@ -335,7 +337,7 @@ Check `manifest.json` against the mpak registry schema. See `references/CONVENTI
 
 **Registry validation checklist** (read `manifest.json` and verify each):
 
-1. **Name format** — must match `/^@[a-z0-9][a-z0-9-]{0,38}\/[a-z0-9][a-z0-9-]{0,213}$/` (e.g., `@nimblebraininc/stripe`)
+1. **Name format** — must match `/^@[a-z0-9][a-z0-9-]{0,38}\/[a-z0-9][a-z0-9-]{0,213}$/` (e.g., `@<github_owner>/stripe`)
 2. **Version** — valid semver string (e.g., `0.1.0`)
 3. **server.type** — must be one of: `python`, `node`, `binary`
 4. **server.mcp_config** — required object with:
@@ -353,8 +355,8 @@ Check `manifest.json` against the mpak registry schema. See `references/CONVENTI
 **mpak.json check** — verify `mpak.json` exists in repo root with:
 ```json
 {
-  "name": "@nimblebraininc/<name>",
-  "maintainers": ["<github-username>"]
+  "name": "@<github_owner>/<name>",
+  "maintainers": ["<github_owner>"]
 }
 ```
 This file is required for package claiming on the registry. The `name` must match `manifest.json`.
@@ -544,8 +546,8 @@ Do NOT push on the contributor's behalf. Ask them:
 After the push, actively monitor CI — don't just point to a URL:
 
 ```bash
-gh run list --repo NimbleBrainInc/mcp-<name> --branch main --limit 1
-gh run watch --repo NimbleBrainInc/mcp-<name>
+gh run list --repo <github_owner>/mcp-<name> --branch main --limit 1
+gh run watch --repo <github_owner>/mcp-<name>
 ```
 
 If CI fails: read the logs with `gh run view <run-id> --log-failed`, help the contributor diagnose and fix, then create a new commit (not amend).
@@ -564,8 +566,8 @@ gh release create "v${VERSION}" --title "v${VERSION}" --generate-notes
 The release triggers `build-bundle.yml` on 3 runners (linux-amd64, linux-arm64, darwin-arm64). Track it:
 
 ```bash
-gh run list --repo NimbleBrainInc/mcp-<name> --workflow=build-bundle.yml --limit 1
-gh run watch --repo NimbleBrainInc/mcp-<name>
+gh run list --repo <github_owner>/mcp-<name> --workflow=build-bundle.yml --limit 1
+gh run watch --repo <github_owner>/mcp-<name>
 ```
 
 If a runner fails, check logs with `gh run view <run-id> --log-failed`. Common issues:
@@ -580,7 +582,7 @@ Once all 3 runners succeed, the server bundle is announced to the mpak registry.
 "Your `<display>` MCP server is built, bundled, and announced to the mpak registry. It may take several minutes to propagate. Once live, anyone can run it:
 
 ```
-mpak run @nimblebraininc/<name>
+mpak run @<github_owner>/<name>
 ```
 
 To check availability:
