@@ -464,12 +464,8 @@ jobs:
         run: npx @anthropic-ai/mcpb pack
       - name: Run MTF scanner
         run: |
-          if pip install mpak-scanner 2>/dev/null; then
-            mpak-scanner scan *.mcpb --json > scan-results.json
-          else
-            echo "mpak-scanner not yet available — skipping client-side scan"
-            echo '{"findings": []}' > scan-results.json
-          fi
+          uv pip install mpak-scanner
+          mpak-scanner scan *.mcpb --json > scan-results.json
       - name: Check for critical/high findings
         run: |
           python3 -c "
