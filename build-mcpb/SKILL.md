@@ -90,7 +90,7 @@ If cold start, verify the basics before proceeding:
 1. **gh CLI** — `gh auth status` succeeds
 2. **Language toolchain** — Python: `uv --version`, `ruff --version`, `ty --version`; TypeScript: `node --version`, `npm --version`
 3. **mpak CLI** — `mpak --version` succeeds
-4. **GitHub owner** — detect via `gh api user --jq .login` and store as `<github_owner>`. Confirm with the user: "Publishing as `<github_owner>` — correct?"
+4. **GitHub owner** — detect the user's login via `gh api user --jq .login` as a default, then ask: "Repo owner will be `<detected_login>` — or would you prefer a different org/account?" If the user specifies a different owner, use that as `<github_owner>`. The mpak registry allows any GitHub user or org to publish under their own scope (`@<owner>/*` must match the repo owner via OIDC), so this can be a personal account or any org the user has access to.
 
 If any check fails, tell the contributor what's missing and point them to `~/.claude/skills/nimblebrain-contributor/references/DEV_SETUP.md` for setup instructions. Don't block on optional tools (e.g., mpak-scanner) — just note they're unavailable and skip the phases that need them.
 
@@ -121,7 +121,7 @@ Derive these values from `<name>` (the service name):
 | `<Name>` (PascalCase) | `Jsonplaceholder` |
 | `<NAME>` (UPPER_SNAKE) | `JSONPLACEHOLDER` |
 | `<display>` (human-readable) | Ask the user, e.g. "JSONPlaceholder" |
-| `<github_owner>` | Detected in Phase 0b via `gh api user --jq .login` |
+| `<github_owner>` | Detected in Phase 0b (user's login by default, or user-specified org) |
 
 Language-specific derived names:
 
@@ -141,9 +141,9 @@ Otherwise:
 1. Make sure the user is outside of any existing git repo. If they aren't, help them navigate to a suitable directory first.
 
 2. Confirm before running:
-   "This will create a public repo at `<github_owner>/mcp-<name>` on GitHub. Ready to go?"
+   "This will create `<github_owner>/mcp-<name>` on GitHub as a **public** repo. Want to change the visibility (private/internal), or good to go?"
 
-3. Once confirmed:
+3. Once confirmed (use `--public` by default, or `--private`/`--internal` per user choice):
 
    Python:
    ```bash
