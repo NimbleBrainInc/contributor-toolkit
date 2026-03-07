@@ -463,9 +463,7 @@ jobs:
       - name: Build bundle
         run: npx @anthropic-ai/mcpb pack
       - name: Run MTF scanner
-        run: |
-          uv pip install mpak-scanner
-          mpak-scanner scan *.mcpb --json > scan-results.json
+        run: uvx mpak-scanner scan *.mcpb --json > scan-results.json
       - name: Check for critical/high findings
         run: |
           python3 -c "
