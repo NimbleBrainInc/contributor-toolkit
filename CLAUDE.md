@@ -7,19 +7,21 @@ Installable skill pack for NimbleBrain open source contributors. Published to mp
 ```
 nimblebrain-contributor/     # Onboarding, coordination, HQ interaction
 ├── SKILL.md
+├── CHANGELOG.md
 ├── version.txt
 └── references/
     ├── DEV_SETUP.md
-    └── PIPELINE.md
+    ├── ECOSYSTEM.md
+    └── RESOURCES.md
 
 build-mcpb/                  # Full MCP server build pipeline
 ├── SKILL.md
+├── CHANGELOG.md
 ├── version.txt
-├── references/
-│   ├── CONVENTIONS.md
-│   ├── PATTERNS.md
-│   └── SKILL_FORMAT.md
-└── templates/               # 16 project scaffold templates
+└── references/
+    ├── CONVENTIONS.md
+    ├── PATTERNS.md
+    └── SKILL_FORMAT.md
 ```
 
 ## Versioning
