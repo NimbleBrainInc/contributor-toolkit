@@ -80,11 +80,23 @@ Do **not** proceed to wiring (5d) until the contributor has explicitly approved 
 
 ## 5d: Wire the Resource
 
-See `references/SKILL_FORMAT.md` for complete wiring examples in both languages.
+**Python:** Add to `server.py`:
+- `from importlib.resources import files` import
+- `SKILL_CONTENT = files("mcp_<name>").joinpath("SKILL.md").read_text()`
+- `instructions=` parameter on `FastMCP(...)` constructor
+- `@mcp.resource("skill://<name>/usage")` decorated function returning `SKILL_CONTENT`
 
-**TypeScript bundling reminder:** Since `.mcpbignore` excludes both `src/` and `*.md`:
+**TypeScript:** Add to `src/index.ts`:
+- `import { readFileSync } from "fs"` and `import { join } from "path"`
+- `const SKILL_CONTENT = readFileSync(join(__dirname, "SKILL.md"), "utf-8")`
+- `instructions` in `McpServer` constructor
+- `server.resource("skill-usage", "skill://<name>/usage", ...)` registration
+
+**TypeScript bundling:** Since `.mcpbignore` excludes both `src/` and `*.md`:
 1. Add to Makefile `build` target: `cp src/SKILL.md build/SKILL.md`
 2. Add to `.mcpbignore`: `!build/SKILL.md`
+
+See `references/SKILL_FORMAT.md` for complete wiring examples in both languages.
 
 ## 5e: Verify
 

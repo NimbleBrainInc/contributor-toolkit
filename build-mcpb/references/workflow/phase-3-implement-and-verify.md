@@ -16,10 +16,10 @@ Write tool logic, models, and client code, then run all checks to ensure the imp
 ## If Python
 
 Implement in this order:
-1. **`api_models.py`** — Pydantic models for API responses
-2. **`api_client.py`** — Async aiohttp client with one method per endpoint
-3. **`server.py`** — FastMCP server with `@mcp.tool()` decorators
-4. **`manifest.json`** + **`server.json`** — Fill all placeholder fields
+1. **`api_models.py`** — Pydantic models for API responses. Use `Field(alias=...)` for camelCase mapping.
+2. **`api_client.py`** — Async aiohttp client. Set BASE_URL, add one method per endpoint.
+3. **`server.py`** — FastMCP server with `@mcp.tool()` decorators. Global client with lazy init. Dual transport (http_app + stdio).
+4. **`manifest.json`** + **`server.json`** — Fill all placeholder fields. See `references/CONVENTIONS.md` for the full `server.json` schema.
 
 See `references/PATTERNS.md` → "Python Server Patterns" for complete code examples.
 
@@ -27,7 +27,7 @@ See `references/PATTERNS.md` → "Python Server Patterns" for complete code exam
 
 Implement in this order:
 1. **`src/types.ts`** — Zod schemas for API response shapes
-2. **`src/utils/apiClient.ts`** — Rename class, set BASE_URL, add methods
+2. **`src/utils/apiClient.ts`** — Rename class, set BASE_URL, add methods. Update import in `errorResponse.ts`.
 3. **`src/schemas.ts`** — Zod input schema for each tool
 4. **`src/formatters.ts`** — One formatter per resource type
 5. **`src/handlers/<tool>.ts`** — One file per tool

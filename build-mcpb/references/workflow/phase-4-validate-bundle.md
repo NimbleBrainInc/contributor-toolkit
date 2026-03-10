@@ -6,11 +6,22 @@ Validate the manifest, build the project, create the bundle, run MTF compliance 
 
 Check `manifest.json` against the mpak registry schema. See `references/CONVENTIONS.md` for the full manifest format per language.
 
-Key items that most commonly fail validation:
+**Registry validation checklist** (read `manifest.json` and verify each):
 
-1. **Name format** — must match `/^@[a-z0-9][a-z0-9-]{0,38}\/[a-z0-9][a-z0-9-]{0,213}$/`
-2. **server.mcp_config** — required object with `command` (string), `args` (array of strings), optional `env`
-3. **user_config entries** — each must have `type`; use `sensitive: true` for secrets
+1. **Name format** — must match `/^@[a-z0-9][a-z0-9-]{0,38}\/[a-z0-9][a-z0-9-]{0,213}$/` (e.g., `@<github_owner>/stripe`)
+2. **Version** — valid semver string (e.g., `0.1.0`)
+3. **server.type** — must be one of: `python`, `node`, `binary`
+4. **server.mcp_config** — required object with:
+   - `command` (string, required) — e.g., `"python"` or `"node"`
+   - `args` (array of strings, required) — e.g., `["-m", "mcp_stripe.server"]`
+   - `env` (object, optional) — maps env vars to `${user_config.<field>}` references
+5. **user_config entries** — each must have:
+   - `type` (required) — e.g., `"string"`
+   - `sensitive: true` for secrets (API keys, tokens)
+   - Referenced via `${user_config.<field>}` in `server.mcp_config.env`
+6. **tools array** — each entry needs `name` (required) and `description` (recommended)
+7. **Python-specific:** `server.type: "python"`, `entry_point` is module path
+8. **TypeScript-specific:** `server.type: "node"`, `entry_point: "build/index.js"`, `${__dirname}` prefix in args
 
 **mpak.json check** — verify `mpak.json` exists in repo root with:
 ```json

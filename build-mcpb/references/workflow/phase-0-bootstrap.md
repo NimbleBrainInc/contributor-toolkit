@@ -39,14 +39,24 @@ If any check fails, tell the contributor what's missing and point them to `~/.cl
 
 ## 0e: Naming Variables
 
-Derive these key values from `<name>` (the service name):
+Derive these values from `<name>` (the service name):
 
-| Variable | Description |
+| Variable | Example (`<name>` = `jsonplaceholder`) |
 |---|---|
+| `<name>` | `jsonplaceholder` |
+| `<Name>` (PascalCase) | `Jsonplaceholder` |
+| `<NAME>` (UPPER_SNAKE) | `JSONPLACEHOLDER` |
 | `<display>` (human-readable) | Ask the user, e.g. "JSONPlaceholder" |
 | `<github_owner>` | Detected in Phase 0b (user's login by default, or user-specified org) |
 
-For all other naming conventions — module paths, package scopes, env vars, source directories, language-specific derived names — see `references/CONVENTIONS.md`.
+Language-specific derived names:
+
+| Variable | Python | TypeScript |
+|----------|--------|------------|
+| Package scope | `@<github_owner>/<name>` | `@<github_owner>/<name>` |
+| Module / package | `mcp_<name>` (underscores) | `mcp-<name>` (hyphens) |
+| Source directory | `src/mcp_<name>/` | `src/` |
+| Env var | `<NAME>_API_KEY` | `<NAME>_API_KEY` |
 
 ## 0f: Repo Creation + Template Customization
 
