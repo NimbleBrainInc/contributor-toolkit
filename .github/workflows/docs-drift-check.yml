@@ -1,0 +1,69 @@
+name: Docs Drift Check
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+    branches: [main]
+
+jobs:
+  check-docs-drift:
+    if: github.event.pull_request.user.login == 'JoeCardoso13'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          claude_args: "--model claude-sonnet-4-6 --max-turns 3"
+          prompt: |
+            You are a documentation drift detector. Your job is to compare the claims
+            in CLAUDE.md and README.md against the actual state of this repository and
+            the changes in this PR.
+
+            ## Steps
+
+            1. Read CLAUDE.md and README.md in full.
+
+            2. Verify every factual claim against the actual repo, including the following examples:
+
+               **CLAUDE.md — Structure section:**
+               - Glob and read to confirm every listed file and directory exists.
+               - Check for files/dirs that exist but are NOT listed (missing from docs).
+
+               **CLAUDE.md — Versioning section:**
+               - Compare against release-please-config.json and .release-please-manifest.json.
+               - Verify the "DO NOT manually edit" list is accurate.
+               - Verify the commit format table is consistent with release-please config.
+
+               **CLAUDE.md — Script paths:**
+               - Confirm ./scripts/validate.sh exists and is referenced correctly.
+
+               **CLAUDE.md — Publishing Flow:**
+               - Compare the described flow against .github/workflows/release-please.yml.
+
+               **README.md — Install commands:**
+               - Verify skill directory names match actual directories in the repo.
+
+               **README.md — Skills table:**
+               - Compare the purpose descriptions against each skill's SKILL.md frontmatter.
+
+               **README.md — Developing Locally:**
+               - Verify paths and instructions reference real directories.
+
+               **README.md — Versioning section:**
+               - Cross-check against release-please config.
+
+            3. Consider the PR diff: do the changes in this PR make any existing doc
+               claim newly wrong? Use the GitHub context to review what files changed.
+
+            4. Output your findings:
+
+               - If drift is found, post a structured comment listing each issue:
+                 what the doc says vs what is actually true. Separate issues into
+                 "Pre-existing drift" and "Drift introduced by this PR".
+               - If no drift is found, post a brief "Docs look good" confirmation.
+
+            Be precise. Only flag real discrepancies, not style preferences.
