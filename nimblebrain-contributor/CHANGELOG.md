@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.1](https://github.com/NimbleBrainInc/contributor-toolkit/compare/nimblebrain-contributor/v0.4.0...nimblebrain-contributor/v0.4.1) (2026-03-10)
+
+
+### Bug Fixes
+
+* cleaning old suggestion of invocation of build-mcpb to the newly adopted agentic auto invocation ([06e9016](https://github.com/NimbleBrainInc/contributor-toolkit/commit/06e9016e9362b9f5f743465c41b935d8719e8352))
+
 ## [0.4.0](https://github.com/NimbleBrainInc/contributor-toolkit/compare/nimblebrain-contributor/v0.3.0...nimblebrain-contributor/v0.4.0) (2026-03-04)
 
 
