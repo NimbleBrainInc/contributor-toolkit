@@ -51,10 +51,6 @@ metadata:
 
 Build MCP servers end-to-end: scaffold from API docs, implement tools, validate the bundle, create an embedded skill resource, and release to the mpak registry. Supports Python (FastMCP) and TypeScript (@modelcontextprotocol/sdk).
 
-## Quick Start
-
-> /build-mcpb
-
 ## Pipeline
 
 Work through each phase in order. Read the linked workflow file for detailed instructions. Each phase has a gate that must pass before proceeding.
