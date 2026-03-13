@@ -4,10 +4,35 @@ Set up language, service name, repo, and template customization — everything n
 
 ## 0a: Entry Routing
 
-Determine whether this is a **warm start** or **cold start**:
+Determine whether this is a **warm start** or **cold start** by locating the integration issue. Work through these steps in order, stopping as soon as an issue is found:
 
-- **Warm start:** Invoked from `/nimblebrain-contributor` (or after it) in the same session. The conversation already contains a service name, language choice, and the environment has been checked. Heuristic: if the conversation already contains a service name from prior nimblebrain-contributor interaction, treat as warm.
-- **Cold start:** Standalone `/build-mcpb` invocation with no prior context. Need to establish everything from scratch.
+**Step 1 — Conversation context:** Check whether an integration issue number or URL is already present in the conversation (e.g. passed by a prior `/nimblebrain-contributor` invocation, or stated by the user).
+
+**Step 2 — Infer from repo name:** If no reference is in context, try to derive the service name from the current working directory (strip `mcp-` prefix) and search for a matching issue:
+```bash
+gh issue list --repo NimbleBrainInc/.github --label integration --search "New MCP Server: <name>"
+```
+
+**Step 3 — Ask the user:** If the search turns up nothing, ask: "Is there an existing integration issue for this service on NimbleBrainInc/.github? If so, share the number or URL."
+
+---
+
+Once an issue is found, fetch it and validate:
+```bash
+gh issue view <number> --repo NimbleBrainInc/.github
+```
+Required fields: service name (title of the form `New MCP Server: <service>`), API docs URL, and auth method. If all three are present → **warm start**.
+
+**First action on warm start:** Assign the issue to the user before any other step:
+```bash
+gh issue edit <number> --repo NimbleBrainInc/.github --add-assignee @me
+```
+
+**Language on warm start:** Use the language already in the conversation if present (e.g. from a `/nimblebrain-contributor` session). If not available, ask before continuing.
+
+---
+
+- **Cold start:** No integration issue found after all three steps above, or the issue is missing required fields. Proceed to establish everything from scratch starting at 0b.
 
 ## 0b: Prerequisites (cold-start only)
 
