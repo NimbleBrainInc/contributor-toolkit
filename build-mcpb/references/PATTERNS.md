@@ -18,7 +18,15 @@
 │   └── SKILL.md         ← embedded skill resource
 ├── tests/
 │   ├── __init__.py
-│   └── test_api_models.py
+│   ├── conftest.py          ← shared fixtures (mcp_server, mock_client)
+│   ├── test_api_client.py   ← API client unit tests (mocked HTTP)
+│   ├── test_api_models.py
+│   └── test_server.py       ← MCP server tests via FastMCP Client
+├── tests-integration/
+│   ├── __init__.py
+│   ├── conftest.py          ← env checks, real API client fixture
+│   ├── test_core_tools.py   ← real API calls with tier-skip helpers
+│   └── test_skill_llm.py    ← LLM smoke tests (tool selection)
 ├── .gitignore
 ├── .mcpbignore
 ├── .env.example
@@ -491,6 +499,144 @@ bundle: ## Build MCPB bundle locally
 
 This vendors dependencies into `deps/` (same as the GitHub Action does), then packs. Contributors can validate bundles locally before releasing.
 
+### Test Patterns (Python)
+
+Three test layers, each with its own directory and concerns:
+
+**Unit tests (`tests/`)** — No API key needed. Run with `make test`.
+
+`tests/conftest.py` — Shared fixtures:
+```python
+import pytest
+from unittest.mock import AsyncMock
+from mcp_<name>.server import mcp
+
+@pytest.fixture
+def mcp_server():
+    """The FastMCP server instance for Client-based tests."""
+    return mcp
+
+@pytest.fixture
+def mock_client():
+    """API client with all methods mocked."""
+    client = AsyncMock()
+    client.list_items = AsyncMock(return_value=[...])
+    # ... one mock per client method
+    return client
+```
+
+`tests/test_server.py` — Test tools via FastMCP Client (not by calling functions directly):
+```python
+from fastmcp import Client
+from fastmcp.exceptions import ToolError
+
+class TestSkillResource:
+    @pytest.mark.asyncio
+    async def test_initialize_returns_instructions(self, mcp_server):
+        async with Client(mcp_server) as client:
+            result = await client.initialize()
+            assert "skill://<name>/usage" in result.instructions
+
+    @pytest.mark.asyncio
+    async def test_skill_resource_content(self, mcp_server):
+        async with Client(mcp_server) as client:
+            resources = await client.list_resources()
+            uris = [str(r.uri) for r in resources]
+            assert "skill://<name>/usage" in uris
+            content = await client.read_resource("skill://<name>/usage")
+            text = content[0].text if hasattr(content[0], "text") else str(content[0])
+            assert "## Tools" in text
+
+class TestMCPTools:
+    @pytest.mark.asyncio
+    async def test_tool_success(self, mcp_server, mock_client, monkeypatch):
+        monkeypatch.setattr("mcp_<name>.server._client", mock_client)
+        async with Client(mcp_server) as client:
+            result = await client.call_tool("tool_name", {"arg": "value"})
+            assert len(result) > 0
+
+    @pytest.mark.asyncio
+    async def test_tool_api_error(self, mcp_server, mock_client, monkeypatch):
+        mock_client.some_method.side_effect = APIError(401, "Unauthorized")
+        monkeypatch.setattr("mcp_<name>.server._client", mock_client)
+        async with Client(mcp_server) as client:
+            with pytest.raises(ToolError, match="401"):
+                await client.call_tool("tool_name", {"arg": "value"})
+```
+
+**Key:** FastMCP wraps tool exceptions as `fastmcp.exceptions.ToolError`, not the original type. Always catch `ToolError` in tests.
+
+**Integration tests (`tests-integration/`)** — Requires real API key. Run with `make test-integration`.
+
+`tests-integration/conftest.py` — Gate on env var:
+```python
+def pytest_configure(config):
+    if not os.environ.get("<NAME>_API_KEY"):
+        pytest.exit("ERROR: <NAME>_API_KEY required for integration tests.")
+
+@pytest_asyncio.fixture
+async def client(api_key: str) -> Client:
+    client = Client(api_key=api_key)
+    yield client
+    await client.close()
+```
+
+`tests-integration/test_core_tools.py` — Tier-skip pattern for plan-gated endpoints:
+```python
+async def has_premium_access(client: Client) -> bool:
+    """Check if the plan supports premium endpoints."""
+    try:
+        await client.premium_method(limit=1)
+        return True
+    except APIError as e:
+        if e.status in (400, 401, 403):
+            return False
+        raise
+
+class TestPremiumFeature:
+    @pytest.mark.asyncio
+    async def test_premium_endpoint(self, client):
+        if not await has_premium_access(client):
+            pytest.skip("Premium access not available on current plan")
+        result = await client.premium_method(limit=5)
+        assert isinstance(result, list)
+```
+
+**LLM smoke tests (`tests-integration/test_skill_llm.py`)** — Requires `ANTHROPIC_API_KEY`. Run with `make test-llm`.
+
+Sends server context (instructions + skill + tools) to Claude Haiku, asserts correct tool selection:
+```python
+async def get_server_context() -> dict:
+    async with Client(mcp) as client:
+        init = await client.initialize()
+        resources = await client.list_resources()
+        skill_text = ""
+        for r in resources:
+            if "skill://" in str(r.uri):
+                contents = await client.read_resource(str(r.uri))
+                skill_text = contents[0].text
+        tools_list = await client.list_tools()
+        tools = [{"name": t.name, "description": t.description, "input_schema": t.inputSchema} for t in tools_list]
+        return {"instructions": init.instructions, "skill": skill_text, "tools": tools}
+
+class TestSkillLLMInvocation:
+    @pytest.mark.asyncio
+    async def test_query_selects_correct_tool(self):
+        ctx = await get_server_context()
+        client = get_anthropic_client()
+        system = f"You are an assistant.\n\n## Instructions\n{ctx['instructions']}\n\n## Skill\n{ctx['skill']}"
+        response = client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=1024,
+            system=system,
+            messages=[{"role": "user", "content": "Your test prompt here"}],
+            tools=[{"type": "custom", **t} for t in ctx["tools"]],
+        )
+        tool_calls = [b for b in response.content if b.type == "tool_use"]
+        assert len(tool_calls) > 0
+        assert tool_calls[0].name == "expected_tool_name"
+```
+
 ### Build & Test Commands (Python)
 
 ```bash
@@ -498,8 +644,10 @@ uv sync --dev                        # Install dependencies
 uv run ruff format src/ tests/       # Format
 uv run ruff check src/ tests/        # Lint
 uv run ty check src/                 # Type check
-uv run pytest tests/ -v              # Test
+uv run pytest tests/ -v              # Unit tests
 make check                           # All of the above
+make test-integration                # Integration tests (needs API key)
+make test-llm                        # LLM smoke tests (needs API key + ANTHROPIC_API_KEY)
 make bundle                          # Vendor deps + mcpb pack (local bundle)
 
 # Test locally

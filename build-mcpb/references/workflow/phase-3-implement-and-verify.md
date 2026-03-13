@@ -52,11 +52,19 @@ Run all checks and fix any issues before proceeding.
 **Python:**
 ```bash
 uv sync --dev
-uv run ruff format src/ tests/
-uv run ruff check src/ tests/
-uv run ty check src/
-uv run pytest tests/ -v
+make check                    # format, lint, typecheck, unit tests
+make test-integration         # real API calls (needs <NAME>_API_KEY)
+make test-llm                 # LLM smoke tests (needs ANTHROPIC_API_KEY)
 ```
+
+The template includes three test layers:
+1. **Unit tests** (`tests/`) — Mocked HTTP, FastMCP Client-based tool tests, skill resource tests. Always run.
+2. **Integration tests** (`tests-integration/`) — Real API calls with tier-skip helpers for plan-gated endpoints. Run when API key is available.
+3. **LLM smoke tests** (`tests-integration/test_skill_llm.py`) — Verify Claude Haiku selects the correct tool given the skill resource. Run when both API key and ANTHROPIC_API_KEY are available.
+
+At minimum, `make check` must pass (unit tests). Integration and LLM tests are recommended but not blocking for initial release.
+
+See `references/PATTERNS.md` → "Test Patterns (Python)" for complete examples including the FastMCP Client pattern, ToolError handling, and tier-skip helpers.
 
 **TypeScript:**
 ```bash
