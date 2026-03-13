@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.6.0](https://github.com/NimbleBrainInc/contributor-toolkit/compare/build-mcpb/v0.5.0...build-mcpb/v0.6.0) (2026-03-13)
+
+
+### Features
+
+* **build-mcpb:** document three-layer Python test patterns ([71ee9e3](https://github.com/NimbleBrainInc/contributor-toolkit/commit/71ee9e3e58554e59f3c2b6070c2d5cb63a1a424c))
+* **build-mcpb:** progressive disclosure workflow ([19373a5](https://github.com/NimbleBrainInc/contributor-toolkit/commit/19373a5a3de39b61d8e4fe5b185a380f7932cb2e))
+
+
+### Bug Fixes
+
+* **build-mcpb:** restore inline implementation hints in workflow files ([be13772](https://github.com/NimbleBrainInc/contributor-toolkit/commit/be13772680bc7d52a16954e7684ac5b11bdd0e8a))
+
 ## [0.5.0](https://github.com/NimbleBrainInc/contributor-toolkit/compare/build-mcpb/v0.4.0...build-mcpb/v0.5.0) (2026-03-09)
 
 
