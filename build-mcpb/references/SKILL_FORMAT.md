@@ -2,7 +2,7 @@
 
 ## Overview
 
-An embedded skill resource is a single `SKILL.md` file that lives **inside** the MCP server package and is exposed as an MCP resource at `skill://<name>/usage`. It is NOT a standalone artifact — there is no frontmatter, no `mpak skill validate`, and no separate distribution step. The skill ships automatically with the `.mcpb` bundle.
+An embedded skill resource is a single `SKILL.md` file that lives **inside** the MCP server package and is exposed as an MCP resource at `skill://<name>/usage`. It is NOT a standalone artifact — there is no `mpak skill validate` and no separate distribution step. The skill ships automatically with the `.mcpb` bundle.
 
 ## File Location
 
@@ -11,9 +11,25 @@ An embedded skill resource is a single `SKILL.md` file that lives **inside** the
 | Python | `src/mcp_<name>/SKILL.md` |
 | TypeScript | `src/SKILL.md` |
 
+## Frontmatter
+
+The file begins with YAML frontmatter containing the skill's identity:
+
+```yaml
+---
+name: mcp-<name>-service
+description: Provides knowledge of how to use MCP <name> most effectively. It's loaded into the agent's context when running the MCP.
+---
+```
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `name` | Yes | Skill identifier, following the `mcp-<name>-service` convention |
+| `description` | Yes | One-line summary of what the skill provides |
+
 ## Content Structure
 
-The file is pure Markdown (no YAML frontmatter). It should contain:
+After the frontmatter, the Markdown body should contain:
 
 1. **Tool selection table** — lists each tool with a one-line description and when to use it
 2. **Context reuse rules** — which tool outputs to feed into subsequent calls (e.g., "use the `id` from `list_items` when calling `get_item`")
