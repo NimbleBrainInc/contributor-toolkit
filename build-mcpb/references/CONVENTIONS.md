@@ -4,9 +4,11 @@
 
 Package names MUST be scoped: `@<github_owner>/<name>`
 
-Name must match the registry regex: `/^@[a-z0-9][a-z0-9-]{0,38}\/[a-z0-9][a-z0-9-]{0,213}$/`
+Name must match the registry regex: `/^@[a-zA-Z0-9][a-zA-Z0-9-]{0,38}\/[a-z0-9][a-z0-9-]{0,213}$/`
 
-Registry rejects other formats (e.g., `ai.nimbletools/name`, uppercase, underscores in name).
+The owner segment (before `/`) accepts mixed case — the registry normalizes it to lowercase. The package name (after `/`) must be lowercase.
+
+Registry rejects other formats (e.g., `ai.nimbletools/name`, underscores in name).
 
 ## Naming
 
@@ -23,7 +25,7 @@ Registry rejects other formats (e.g., `ai.nimbletools/name`, uppercase, undersco
 
 | Field | Required | Notes |
 |-------|----------|-------|
-| `name` | **Yes** | Must match `/^@[a-z0-9][a-z0-9-]{0,38}\/[a-z0-9][a-z0-9-]{0,213}$/` |
+| `name` | **Yes** | Must match `/^@[a-zA-Z0-9][a-zA-Z0-9-]{0,38}\/[a-z0-9][a-z0-9-]{0,213}$/` |
 | `version` | **Yes** | Valid semver (e.g., `0.1.0`) |
 | `description` | **Yes** | Short description |
 | `server.type` | **Yes** | `python`, `node`, or `binary` |
