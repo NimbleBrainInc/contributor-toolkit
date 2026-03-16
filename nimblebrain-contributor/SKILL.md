@@ -189,28 +189,55 @@ gh issue create --repo NimbleBrainInc/.github \
 
 Always show the constructed issue body and confirm with the user before running `gh issue create`.
 
-### Path C: Checking Status
+### Path C: Checking on Work
 
-For returning contributors who want to see where things stand. Ask what they want to check:
+For returning contributors who want to check on something they're working on or have worked on. Start open-ended:
 
-"Are you checking on your own assigned work, or looking at the broader project status?"
+"What are you working on, or what would you like to check on?"
 
-**Their assigned issues:**
+Let the user describe it in their own words. Then determine: **is this an integration (MCP server)?**
+
+---
+
+**If it's NOT an integration:**
+
+Stay open-ended. Ask clarifying questions to understand what they need. To find any issues under their name:
+
 ```bash
 gh search issues --owner NimbleBrainInc --state open --assignee @me
 ```
 
-**Overall project activity:**
+Present results clearly and help them navigate from there. Offer relevant next steps based on what they're actually working on — do not assume it's an MCP server build.
+
+---
+
+**If it IS an integration:**
+
+Check whether an issue has already been filed for this integration:
+
 ```bash
-gh search issues --owner NimbleBrainInc --state open --limit 20
+gh search issues --owner NimbleBrainInc --state open --label "integration" "<service name>"
 ```
 
-Present the results clearly — summarize what's open, what's recently closed, and flag anything that looks stalled or unassigned that might be a good pickup.
+**No issue exists yet → Path B.**
+Walk them through the integration proposal flow (Path B above), which ends with filing the issue. Do not skip ahead to building.
 
-After presenting, offer a natural next step:
-"Want to pick up something new, or jump back into what you were building?"
+**Issue already exists → run the build-mcpb checks.**
+The integration has been proposed and tracked. Now verify the build is in good shape:
 
-If new work → Path A. If continuing a build → invoke `/build-mcpb` in this same session to pick up where they left off.
+1. Ensure the `build-mcpb` skill is installed:
+   ```bash
+   ls ~/.claude/skills/build-mcpb/SKILL.md 2>/dev/null && echo "installed" || echo "MISSING"
+   ```
+   If missing:
+   ```bash
+   mpak skill install @nimblebraininc/build-mcpb
+   ```
+
+2. Invoke `/build-mcpb` in this same session so it can run its full workflow validation — every check must pass.
+
+> **CRITICAL — do NOT skip this step.**
+> You are **forbidden** from proposing, suggesting, or performing any staging, committing, pushing, or publishing of an MCP bundle unless `/build-mcpb` has been invoked in this session and **all** of its workflow checks have passed. No exceptions. If a check fails, help the user fix it and re-run. Do not work around this by staging or committing piecemeal.
 
 ### Path D: Exploring the Ecosystem
 
