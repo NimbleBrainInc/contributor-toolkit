@@ -21,7 +21,15 @@ build-mcpb/                  # Full MCP server build pipeline
 └── references/
     ├── CONVENTIONS.md
     ├── PATTERNS.md
-    └── SKILL_FORMAT.md
+    ├── SKILL_FORMAT.md
+    └── workflow/
+        ├── phase-0-bootstrap.md
+        ├── phase-1-api-analysis.md
+        ├── phase-2-scaffold.md
+        ├── phase-3-implement-and-verify.md
+        ├── phase-4-validate-bundle.md
+        ├── phase-5-embed-skill.md
+        └── phase-6-release.md
 ```
 
 ## Versioning
