@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.0](https://github.com/NimbleBrainInc/contributor-toolkit/compare/nimblebrain-contributor/v0.4.1...nimblebrain-contributor/v0.5.0) (2026-03-17)
+
+
+### Features
+
+* **nimblebrain-contributor:** rework Path C into open-ended check-on-work flow ([817947c](https://github.com/NimbleBrainInc/contributor-toolkit/commit/817947ca3f76c7f393043d5e7e5f079e567f65b4))
+
 ## [0.4.1](https://github.com/NimbleBrainInc/contributor-toolkit/compare/nimblebrain-contributor/v0.4.0...nimblebrain-contributor/v0.4.1) (2026-03-10)
 
 
