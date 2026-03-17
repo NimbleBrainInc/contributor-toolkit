@@ -8,7 +8,7 @@ Check `manifest.json` against the mpak registry schema. See `references/CONVENTI
 
 **Registry validation checklist** (read `manifest.json` and verify each):
 
-1. **Name format** — must match `/^@[a-z0-9][a-z0-9-]{0,38}\/[a-z0-9][a-z0-9-]{0,213}$/` (e.g., `@<github_owner>/stripe`)
+1. **Name format** — must match `/^@[a-zA-Z0-9][a-zA-Z0-9-]{0,38}\/[a-z0-9][a-z0-9-]{0,213}$/` (e.g., `@JoeCardoso13/stripe`). The registry normalizes the owner to lowercase.
 2. **Version** — valid semver string (e.g., `0.1.0`)
 3. **server.type** — must be one of: `python`, `node`, `binary`
 4. **server.mcp_config** — required object with:
