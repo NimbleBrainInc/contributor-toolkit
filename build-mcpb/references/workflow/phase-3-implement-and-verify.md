@@ -49,22 +49,17 @@ See `references/PATTERNS.md` → "TypeScript Server Patterns" for complete code 
 
 Run all checks and fix any issues before proceeding.
 
+### Unit tests and code quality
+
 **Python:**
 ```bash
 uv sync --dev
 make check                    # format, lint, typecheck, unit tests
-make test-integration         # real API calls (needs <NAME>_API_KEY)
-make test-llm                 # LLM smoke tests (needs ANTHROPIC_API_KEY)
 ```
 
-The template includes three test layers:
-1. **Unit tests** (`tests/`) — Mocked HTTP, FastMCP Client-based tool tests, skill resource tests. Always run.
-2. **Integration tests** (`tests-integration/`) — Real API calls with tier-skip helpers for plan-gated endpoints. Run when API key is available.
-3. **LLM smoke tests** (`tests-integration/test_skill_llm.py`) — Verify Claude Haiku selects the correct tool given the skill resource. Run when both API key and ANTHROPIC_API_KEY are available.
+Mocked HTTP, FastMCP Client-based tool tests, skill resource tests. The template scaffolds these — fill them in for every tool. `make check` must pass before proceeding.
 
-At minimum, `make check` must pass (unit tests). Integration and LLM tests are recommended but not blocking for initial release.
-
-See `references/PATTERNS.md` → "Test Patterns (Python)" for complete examples including the FastMCP Client pattern, ToolError handling, and tier-skip helpers.
+See `references/PATTERNS.md` → "Test Patterns (Python)" for the FastMCP Client pattern, ToolError handling, and mock fixtures.
 
 **TypeScript:**
 ```bash
@@ -72,13 +67,49 @@ make check
 ```
 This runs: `format:check` → `lint` → `typecheck` → `test`
 
+### Integration tests
+
+**Python:**
+```bash
+make test-integration         # real API calls (needs <NAME>_API_KEY in .env)
+```
+
+Real API calls against the live service. The template scaffolds `tests-integration/test_core_tools.py` as a stub — you must replace it with real tests.
+
+**How to write them:** Open `api_client.py` and list every public method (skip `__init__`, `close`, `_request`, `_ensure_session`, and dunder methods). For each method, write a test:
+
+- **Read methods** (list, get, search): Call with minimal valid parameters, assert the response has the expected shape (list, dict, or model with expected keys).
+- **Write methods** (create, update, delete): Create a test resource, verify it, then clean it up in a `finally` block. If no delete method exists, mark the resource as completed/archived and leave a comment.
+- **Chained methods:** Some methods need an ID from a prior call (e.g., `list_workspaces` returns a GID needed by `search_tasks`). Chain them — call the list method first, use the first result's ID.
+- **Tier-gated methods:** If the API has premium endpoints that may not be available on the user's plan, write a `has_<feature>_access` helper that probes the endpoint and returns `False` on 401/402/403. Use `pytest.skip()` in the test if access is unavailable.
+
+See `references/PATTERNS.md` → "Integration Test Patterns (Python)" for concrete examples.
+
+**How to run them:**
+
+1. Ask the contributor to add their API key to `.env` (e.g., `ASANA_API_KEY=xxx`). The `.env` file is already in `.gitignore` and `.mcpbignore`. The contributor was asked for this key at the start of the process — they should have it ready.
+2. Run `make test-integration`.
+3. All tests should pass or skip (for tier-gated features). Fix any failures before proceeding.
+4. If the contributor says auth setup is too complex for now (e.g., OAuth flows, multi-step app configuration), proceed — the tests are written and ready to run later. Do not skip writing the tests.
+
+### LLM smoke tests
+
+**Python:**
+```bash
+make test-llm                 # needs <NAME>_API_KEY + ANTHROPIC_API_KEY in .env
+```
+
+Verify Claude Haiku selects the correct tool given the skill resource. Requires both the service API key and `ANTHROPIC_API_KEY`. See `references/PATTERNS.md` for the pattern.
+
 ## Gate
 
 **Criteria:**
 - [ ] All tool logic, models, and client code implemented
 - [ ] Linting passes with no errors
 - [ ] Type checking passes with no errors
-- [ ] All tests pass
+- [ ] Unit tests pass (`make check`)
+- [ ] Integration tests written with real assertions (not stubs or TODOs)
+- [ ] Integration tests pass or skip, if API key is available
 
 **If any criterion fails:** Fix the reported issues and re-run checks.
 

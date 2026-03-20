@@ -566,41 +566,84 @@ class TestMCPTools:
 
 **Key:** FastMCP wraps tool exceptions as `fastmcp.exceptions.ToolError`, not the original type. Always catch `ToolError` in tests.
 
-**Integration tests (`tests-integration/`)** — Requires real API key. Run with `make test-integration`.
+**Integration tests (`tests-integration/`)** — Requires real API key in `.env`. Run with `make test-integration`.
 
-`tests-integration/conftest.py` — Gate on env var:
+`tests-integration/conftest.py` — The template scaffolds this with an env var gate and client fixture. It loads `.env` automatically via `load_dotenv()`, so the contributor just needs to add their key to `.env` rather than exporting it.
+
+`tests-integration/test_core_tools.py` — Derive tests from `api_client.py`. Do NOT leave this as a stub or TODO. Write one test class per logical group of methods.
+
+**Pattern 1 — Read-only method:**
 ```python
-def pytest_configure(config):
-    if not os.environ.get("<NAME>_API_KEY"):
-        pytest.exit("ERROR: <NAME>_API_KEY required for integration tests.")
+class TestListProjects:
+    @pytest.mark.asyncio
+    async def test_list_projects(self, client):
+        # Chain: get a workspace ID first, then list its projects
+        workspaces = await client.list_workspaces()
+        assert len(workspaces) > 0
+        workspace_gid = workspaces[0]["gid"]
 
-@pytest_asyncio.fixture
-async def client(api_key: str) -> Client:
-    client = Client(api_key=api_key)
-    yield client
-    await client.close()
+        result = await client.list_projects(workspace_gid)
+        assert isinstance(result, dict)
+        assert "data" in result
+        print(f"Found {len(result['data'])} project(s)")
 ```
 
-`tests-integration/test_core_tools.py` — Tier-skip pattern for plan-gated endpoints:
+**Pattern 2 — Write method with cleanup:**
 ```python
-async def has_premium_access(client: Client) -> bool:
-    """Check if the plan supports premium endpoints."""
+class TestContactCRUD:
+    @pytest.mark.asyncio
+    async def test_contact_lifecycle(self, client):
+        contact = None
+        try:
+            contact = await client.create_contact(
+                email=f"test-{int(time.time())}@example.com",
+                first_name="Integration",
+                last_name="Test",
+            )
+            assert contact["id"]
+
+            fetched = await client.get_contact(contact["id"])
+            assert fetched["id"] == contact["id"]
+
+            updated = await client.update_contact(
+                contact["id"], first_name="Updated"
+            )
+            assert updated["id"] == contact["id"]
+        finally:
+            if contact:
+                await client.delete_contact(contact["id"])
+```
+
+**Pattern 3 — Tier-gated method:**
+```python
+async def has_search_access(client, workspace_gid: str) -> bool:
     try:
-        await client.premium_method(limit=1)
+        await client.search_tasks(workspace_gid, text="test", limit=1)
         return True
     except APIError as e:
-        if e.status in (400, 401, 403):
+        if e.status in (400, 402, 403):
             return False
         raise
 
-class TestPremiumFeature:
+class TestSearchTasks:
     @pytest.mark.asyncio
-    async def test_premium_endpoint(self, client):
-        if not await has_premium_access(client):
-            pytest.skip("Premium access not available on current plan")
-        result = await client.premium_method(limit=5)
+    async def test_search_tasks(self, client):
+        workspaces = await client.list_workspaces()
+        workspace_gid = workspaces[0]["gid"]
+
+        if not await has_search_access(client, workspace_gid):
+            pytest.skip("Task search requires premium plan")
+
+        result = await client.search_tasks(workspace_gid, text="test", limit=5)
         assert isinstance(result, list)
 ```
+
+**Key rules:**
+- One test per method or per logical CRUD lifecycle is enough. Don't over-test — you're checking "does the API call work?", not exhaustive coverage.
+- Don't test error cases here — unit tests already cover those with mocks.
+- Always clean up write operations in `finally` blocks. If no delete method exists, mark resources as completed/archived.
+- Use `print()` for visibility — integration tests often run interactively.
+- Use timestamped names for created resources (e.g., `f"test-{int(time.time())}@example.com"`) to avoid collisions.
 
 **LLM smoke tests (`tests-integration/test_skill_llm.py`)** — Requires `ANTHROPIC_API_KEY`. Run with `make test-llm`.
 
