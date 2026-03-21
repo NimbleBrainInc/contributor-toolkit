@@ -1,4 +1,4 @@
-# Embedded Skill Resource Format
+# Embedded Skill Resource Format (TypeScript)
 
 ## Overview
 
@@ -6,10 +6,7 @@ An embedded skill resource is a single `SKILL.md` file that lives **inside** the
 
 ## File Location
 
-| Language | Path |
-|----------|------|
-| Python | `src/mcp_<name>/SKILL.md` |
-| TypeScript | `src/SKILL.md` |
+`src/SKILL.md`
 
 ## Frontmatter
 
@@ -35,27 +32,7 @@ After the frontmatter, the Markdown body should contain:
 2. **Context reuse rules** — which tool outputs to feed into subsequent calls (e.g., "use the `id` from `list_items` when calling `get_item`")
 3. **Multi-step workflow patterns** — 2–3 composed workflows showing how to chain tools for real tasks
 
-## Wiring Patterns
-
-### Python (FastMCP)
-
-```python
-from importlib.resources import files
-
-SKILL_CONTENT = files("mcp_<name>").joinpath("SKILL.md").read_text()
-
-mcp = FastMCP(
-    "<Service>",
-    instructions="Read the skill resource at skill://<name>/usage before using tools.",
-)
-
-@mcp.resource("skill://<name>/usage")
-def get_skill() -> str:
-    """Tool selection guide and workflow patterns for this server."""
-    return SKILL_CONTENT
-```
-
-### TypeScript (@modelcontextprotocol/sdk)
+## Wiring Pattern
 
 ```typescript
 import { readFileSync } from "fs";
@@ -74,7 +51,7 @@ server.resource("skill-usage", "skill://<name>/usage", async (uri) => ({
 }));
 ```
 
-### TypeScript Bundling Note
+### Bundling Note
 
 The `.mcpbignore` excludes both `src/` and `*.md`, so the SKILL.md must be copied during build:
 

@@ -4,15 +4,13 @@ Create an in-package skill resource that guides LLMs on how to select and compos
 
 ## 5a: Analyze Tools
 
-Extract the server's tool surface:
-- **Python:** Extract all `@mcp.tool()` functions from `server.py`
-- **TypeScript:** Extract all `server.registerTool()` calls from `src/index.ts`
+Extract all tool registrations from the server entry point.
+See `references/CONVENTIONS-{lang}.md` → "Concept Mapping" for the pattern name.
 
 ## 5b: Draft SKILL.md
 
-Generate a **draft** embedded skill file — or edit the generic scaffolded one, if it exists:
-- **Python:** `src/mcp_<name>/SKILL.md`
-- **TypeScript:** `src/SKILL.md`
+Generate a **draft** embedded skill file — or edit the generic scaffolded one, if it exists.
+See `references/SKILL_FORMAT-{lang}.md` → "File Location" for the correct path.
 
 The draft should contain:
 
@@ -80,36 +78,19 @@ Do **not** proceed to wiring (5d) until the contributor has explicitly approved 
 
 ## 5d: Wire the Resource
 
-**Python:** Add to `server.py`:
-- `from importlib.resources import files` import
-- `SKILL_CONTENT = files("mcp_<name>").joinpath("SKILL.md").read_text()`
-- `instructions=` parameter on `FastMCP(...)` constructor
-- `@mcp.resource("skill://<name>/usage")` decorated function returning `SKILL_CONTENT`
-
-**TypeScript:** Add to `src/index.ts`:
-- `import { readFileSync } from "fs"` and `import { join } from "path"`
-- `const SKILL_CONTENT = readFileSync(join(__dirname, "SKILL.md"), "utf-8")`
-- `instructions` in `McpServer` constructor
-- `server.resource("skill-usage", "skill://<name>/usage", ...)` registration
-
-**TypeScript bundling:** Since `.mcpbignore` excludes both `src/` and `*.md`:
-1. Add to Makefile `build` target: `cp src/SKILL.md build/SKILL.md`
-2. Add to `.mcpbignore`: `!build/SKILL.md`
-
-See `references/SKILL_FORMAT.md` for complete wiring examples in both languages.
+Wire the skill resource per `references/SKILL_FORMAT-{lang}.md` → "Wiring Pattern"
+(TypeScript bundling step included there).
 
 ## 5e: Verify
 
-Run MCP runtime validation (same as Phase 4e) and confirm `resources/list` includes `skill://<name>/usage`:
+Same command as Phase 4e with `resources/list` instead of `tools/list`. Only the executor differs:
 
-**Python:**
-```bash
-printf '{"jsonrpc":"2.0","method":"initialize","id":1,"params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"test","version":"0.1.0"}}}\n{"jsonrpc":"2.0","method":"notifications/initialized"}\n{"jsonrpc":"2.0","method":"resources/list","id":2}\n' | uv run python -m mcp_<name>.server 2>/dev/null
-```
+- **Python:** `... | uv run python -m mcp_<name>.server 2>/dev/null`
+- **TypeScript:** `... | node build/index.js --stdio 2>/dev/null`
 
-**TypeScript:**
+Full command:
 ```bash
-printf '{"jsonrpc":"2.0","method":"initialize","id":1,"params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"test","version":"0.1.0"}}}\n{"jsonrpc":"2.0","method":"notifications/initialized"}\n{"jsonrpc":"2.0","method":"resources/list","id":2}\n' | node build/index.js --stdio 2>/dev/null
+printf '{"jsonrpc":"2.0","method":"initialize","id":1,"params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"test","version":"0.1.0"}}}\n{"jsonrpc":"2.0","method":"notifications/initialized"}\n{"jsonrpc":"2.0","method":"resources/list","id":2}\n' | <executor> 2>/dev/null
 ```
 
 The response should include a resource with `uri: "skill://<name>/usage"`.

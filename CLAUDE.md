@@ -19,9 +19,12 @@ build-mcpb/                  # Full MCP server build pipeline
 ├── CHANGELOG.md
 ├── version.txt
 └── references/
-    ├── CONVENTIONS.md
-    ├── PATTERNS.md
-    ├── SKILL_FORMAT.md
+    ├── CONVENTIONS-PY.md
+    ├── CONVENTIONS-TS.md
+    ├── PATTERNS-PY.md
+    ├── PATTERNS-TS.md
+    ├── SKILL_FORMAT-PY.md
+    ├── SKILL_FORMAT-TS.md
     └── workflow/
         ├── phase-0-bootstrap.md
         ├── phase-1-api-analysis.md
