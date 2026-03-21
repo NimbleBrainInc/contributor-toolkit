@@ -99,7 +99,20 @@ See `references/PATTERNS.md` → "Integration Test Patterns (Python)" for concre
 make test-llm                 # needs <NAME>_API_KEY + ANTHROPIC_API_KEY in .env
 ```
 
-Verify Claude Haiku selects the correct tool given the skill resource. Requires both the service API key and `ANTHROPIC_API_KEY`. See `references/PATTERNS.md` for the pattern.
+Verify Claude Haiku selects the correct tool given the skill resource. Requires both the service API key and `ANTHROPIC_API_KEY`.
+
+**How to write them:** The template scaffolds `get_server_context()` and `get_anthropic_client()` — leave those as-is. Replace the commented-out test stub with 3–5 real tests, one per key tool. Extract a `call_llm()` helper to avoid repeating the system prompt construction across tests.
+
+Each test sends a natural language prompt and asserts the LLM selected the expected tool. Include concrete values for any required parameters in the prompt (IDs, coordinates, dates) — without them, the LLM will ask for clarification instead of calling the tool.
+
+See `references/PATTERNS.md` → "LLM smoke tests" for the `call_llm()` helper pattern and the concrete-identifiers rule.
+
+**How to run them:**
+
+1. Ask the contributor to add `ANTHROPIC_API_KEY` to `.env` alongside the service API key.
+2. Run `make test-llm`.
+3. All tests should pass. If a test fails because the LLM picked the wrong tool, adjust the prompt to be more specific before touching the SKILL.md.
+4. If the contributor does not have an `ANTHROPIC_API_KEY`, proceed — the tests are written and ready to run later. Do not skip writing the tests.
 
 ## Gate
 
@@ -110,6 +123,8 @@ Verify Claude Haiku selects the correct tool given the skill resource. Requires 
 - [ ] Unit tests pass (`make check`)
 - [ ] Integration tests written with real assertions (not stubs or TODOs)
 - [ ] Integration tests pass or skip, if API key is available
+- [ ] LLM smoke tests written with real assertions (not stubs or TODOs)
+- [ ] LLM smoke tests pass, if `ANTHROPIC_API_KEY` is available
 
 **If any criterion fails:** Fix the reported issues and re-run checks.
 

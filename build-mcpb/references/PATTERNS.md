@@ -645,40 +645,49 @@ class TestSearchTasks:
 - Use `print()` for visibility — integration tests often run interactively.
 - Use timestamped names for created resources (e.g., `f"test-{int(time.time())}@example.com"`) to avoid collisions.
 
-**LLM smoke tests (`tests-integration/test_skill_llm.py`)** — Requires `ANTHROPIC_API_KEY`. Run with `make test-llm`.
+**LLM smoke tests (`tests-integration/test_skill_llm.py`)** — Requires `ANTHROPIC_API_KEY` in `.env`. Run with `make test-llm`.
 
-Sends server context (instructions + skill + tools) to Claude Haiku, asserts correct tool selection:
+Sends server context (instructions + skill + tools) to Claude Haiku, asserts correct tool selection. The template scaffolds `get_server_context()` and `get_anthropic_client()` — leave those as-is. Replace the commented-out test stub with real tests.
+
+Write **3–5 tests**, one per key tool. Extract a `call_llm()` helper to avoid repeating the system prompt construction:
+
 ```python
-async def get_server_context() -> dict:
-    async with Client(mcp) as client:
-        init = await client.initialize()
-        resources = await client.list_resources()
-        skill_text = ""
-        for r in resources:
-            if "skill://" in str(r.uri):
-                contents = await client.read_resource(str(r.uri))
-                skill_text = contents[0].text
-        tools_list = await client.list_tools()
-        tools = [{"name": t.name, "description": t.description, "input_schema": t.inputSchema} for t in tools_list]
-        return {"instructions": init.instructions, "skill": skill_text, "tools": tools}
+async def call_llm(prompt: str) -> list:
+    """Send a prompt to Claude Haiku with full server context, return tool calls."""
+    ctx = await get_server_context()
+    client = get_anthropic_client()
+    system = (
+        f"You are an assistant.\n\n"
+        f"## Server Instructions\n{ctx['instructions']}\n\n"
+        f"## Skill Resource\n{ctx['skill']}"
+    )
+    response = client.messages.create(
+        model="claude-haiku-4-5-20251001",
+        max_tokens=1024,
+        system=system,
+        messages=[{"role": "user", "content": prompt}],
+        tools=[{"type": "custom", **t} for t in ctx["tools"]],
+    )
+    return [b for b in response.content if b.type == "tool_use"]
 
 class TestSkillLLMInvocation:
     @pytest.mark.asyncio
-    async def test_query_selects_correct_tool(self):
-        ctx = await get_server_context()
-        client = get_anthropic_client()
-        system = f"You are an assistant.\n\n## Instructions\n{ctx['instructions']}\n\n## Skill\n{ctx['skill']}"
-        response = client.messages.create(
-            model="claude-haiku-4-5-20251001",
-            max_tokens=1024,
-            system=system,
-            messages=[{"role": "user", "content": "Your test prompt here"}],
-            tools=[{"type": "custom", **t} for t in ctx["tools"]],
-        )
-        tool_calls = [b for b in response.content if b.type == "tool_use"]
-        assert len(tool_calls) > 0
-        assert tool_calls[0].name == "expected_tool_name"
+    async def test_list_projects_selected(self):
+        tool_calls = await call_llm("Show me all projects in workspace gid_123456")
+        assert len(tool_calls) > 0, "LLM did not call any tool"
+        assert tool_calls[0].name == "list_projects"
+
+    @pytest.mark.asyncio
+    async def test_create_task_selected(self):
+        tool_calls = await call_llm("Create a task called Review Q3 report in workspace gid_123456")
+        assert len(tool_calls) > 0, "LLM did not call any tool"
+        assert tool_calls[0].name == "create_task"
 ```
+
+**Key rule — include concrete values for required parameters:** If a tool requires parameters (IDs, coordinates, dates), include concrete values in the prompt — even fake ones. Without them, the LLM will correctly ask for clarification instead of calling the tool, and the test will fail with "LLM did not call any tool." Examples:
+- "Show me projects in workspace gid_123456" (not "Show me my projects")
+- "What's the weather at lat=51.5, lon=-0.13?" (not "What's the weather in London?")
+- "Am I busy tomorrow afternoon?" (not "Am I busy Thursday?" — ambiguous date)
 
 ### Build & Test Commands (Python)
 
