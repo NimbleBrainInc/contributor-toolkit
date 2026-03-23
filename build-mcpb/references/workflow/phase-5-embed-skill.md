@@ -116,13 +116,36 @@ The response should include a resource with `uri: "skill://<name>/usage"`.
 
 > **Note:** The embedded skill is encouraged but not mandatory per mpak spec. If no meaningful workflows exist yet (e.g., the server has only 1-2 tools), it's acceptable to skip this phase and add the skill later.
 
+## 5f: Integration & LLM Smoke Tests (Python only)
+
+With the skill resource wired and tools fully implemented, this is the right time to run the deeper test layers that exercise real API calls and LLM tool selection.
+
+**Integration tests** — real API calls against the target service:
+```bash
+make test-integration         # needs <NAME>_API_KEY
+```
+
+**LLM smoke tests** — verify Claude Haiku selects the correct tool given the skill resource:
+```bash
+make test-llm                 # needs <NAME>_API_KEY + ANTHROPIC_API_KEY
+```
+
+See `references/PATTERNS.md` → "Test Patterns (Python)" for complete examples including the FastMCP Client pattern, ToolError handling, tier-skip helpers, and LLM invocation patterns.
+
+**Working through failures:** These tests can be challenging depending on the target API's auth method, plan-gated endpoints, and rate limits. Work through failures interactively with the contributor:
+- If auth is complex (OAuth, multi-step), help the contributor get a working token and update the test fixtures
+- If endpoints are plan-gated, use the tier-skip pattern (see PATTERNS.md) to gracefully skip inaccessible endpoints
+- If the contributor doesn't have the required API keys or wants to move on, that's fine — these tests are recommended but **not blocking** for initial release
+
 ## Gate
 
 **Criteria:**
 - [ ] Contributor has approved the SKILL.md content
 - [ ] Skill resource is wired in server code
 - [ ] `resources/list` includes `skill://<name>/usage`
+- [ ] Integration tests pass (recommended, not blocking)
+- [ ] LLM smoke tests pass (recommended, not blocking)
 
-**If any criterion fails:** Revisit the relevant sub-step above.
+**If any criterion fails:** Revisit the relevant sub-step above. For integration/LLM tests, discuss with the contributor whether to fix now or defer.
 
-**When all pass:** Proceed to Phase 6.
+**When all pass (or non-blocking items deferred):** Proceed to Phase 6.
