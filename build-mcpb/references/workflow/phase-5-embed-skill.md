@@ -116,9 +116,7 @@ The response should include a resource with `uri: "skill://<name>/usage"`.
 
 > **Note:** The embedded skill is encouraged but not mandatory per mpak spec. If no meaningful workflows exist yet (e.g., the server has only 1-2 tools), it's acceptable to skip this phase and add the skill later.
 
-## 5f: Integration & LLM Smoke Tests (Python only)
-
-With the skill resource wired and tools fully implemented, this is the right time to run the deeper test layers that exercise real API calls and LLM tool selection.
+## 5f: Integration & LLM Smoke Tests
 
 **Integration tests** — real API calls against the target service:
 ```bash
@@ -130,7 +128,8 @@ make test-integration         # needs <NAME>_API_KEY
 make test-llm                 # needs <NAME>_API_KEY + ANTHROPIC_API_KEY
 ```
 
-See `references/PATTERNS.md` → "Test Patterns (Python)" for complete examples including the FastMCP Client pattern, ToolError handling, tier-skip helpers, and LLM invocation patterns.
+**Python:**
+See `references/PATTERNS.md` → "Test Patterns" for complete examples including the FastMCP Client pattern, ToolError handling, tier-skip helpers, and LLM invocation patterns.
 
 **Working through failures:** These tests can be challenging depending on the target API's auth method, plan-gated endpoints, and rate limits. Work through failures interactively with the contributor:
 - If auth is complex (OAuth, multi-step), help the contributor get a working token and update the test fixtures
