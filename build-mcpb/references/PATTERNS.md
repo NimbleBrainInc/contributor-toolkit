@@ -566,76 +566,128 @@ class TestMCPTools:
 
 **Key:** FastMCP wraps tool exceptions as `fastmcp.exceptions.ToolError`, not the original type. Always catch `ToolError` in tests.
 
-**Integration tests (`tests-integration/`)** — Requires real API key. Run with `make test-integration`.
+**Integration tests (`tests-integration/`)** — Requires real API key in `.env`. Run with `make test-integration`.
 
-`tests-integration/conftest.py` — Gate on env var:
+`tests-integration/conftest.py` — The template scaffolds this with an env var gate and client fixture. It loads `.env` automatically via `load_dotenv()`, so the contributor just needs to add their key to `.env` rather than exporting it.
+
+`tests-integration/test_core_tools.py` — Derive tests from `api_client.py`. Do NOT leave this as a stub or TODO. Write one test class per logical group of methods.
+
+**Pattern 1 — Read-only method:**
 ```python
-def pytest_configure(config):
-    if not os.environ.get("<NAME>_API_KEY"):
-        pytest.exit("ERROR: <NAME>_API_KEY required for integration tests.")
+class TestListProjects:
+    @pytest.mark.asyncio
+    async def test_list_projects(self, client):
+        # Chain: get a workspace ID first, then list its projects
+        workspaces = await client.list_workspaces()
+        assert len(workspaces) > 0
+        workspace_gid = workspaces[0]["gid"]
 
-@pytest_asyncio.fixture
-async def client(api_key: str) -> Client:
-    client = Client(api_key=api_key)
-    yield client
-    await client.close()
+        result = await client.list_projects(workspace_gid)
+        assert isinstance(result, dict)
+        assert "data" in result
+        print(f"Found {len(result['data'])} project(s)")
 ```
 
-`tests-integration/test_core_tools.py` — Tier-skip pattern for plan-gated endpoints:
+**Pattern 2 — Write method with cleanup:**
 ```python
-async def has_premium_access(client: Client) -> bool:
-    """Check if the plan supports premium endpoints."""
+class TestContactCRUD:
+    @pytest.mark.asyncio
+    async def test_contact_lifecycle(self, client):
+        contact = None
+        try:
+            contact = await client.create_contact(
+                email=f"test-{int(time.time())}@example.com",
+                first_name="Integration",
+                last_name="Test",
+            )
+            assert contact["id"]
+
+            fetched = await client.get_contact(contact["id"])
+            assert fetched["id"] == contact["id"]
+
+            updated = await client.update_contact(
+                contact["id"], first_name="Updated"
+            )
+            assert updated["id"] == contact["id"]
+        finally:
+            if contact:
+                await client.delete_contact(contact["id"])
+```
+
+**Pattern 3 — Tier-gated method:**
+```python
+async def has_search_access(client, workspace_gid: str) -> bool:
     try:
-        await client.premium_method(limit=1)
+        await client.search_tasks(workspace_gid, text="test", limit=1)
         return True
     except APIError as e:
-        if e.status in (400, 401, 403):
+        if e.status in (400, 402, 403):
             return False
         raise
 
-class TestPremiumFeature:
+class TestSearchTasks:
     @pytest.mark.asyncio
-    async def test_premium_endpoint(self, client):
-        if not await has_premium_access(client):
-            pytest.skip("Premium access not available on current plan")
-        result = await client.premium_method(limit=5)
+    async def test_search_tasks(self, client):
+        workspaces = await client.list_workspaces()
+        workspace_gid = workspaces[0]["gid"]
+
+        if not await has_search_access(client, workspace_gid):
+            pytest.skip("Task search requires premium plan")
+
+        result = await client.search_tasks(workspace_gid, text="test", limit=5)
         assert isinstance(result, list)
 ```
 
-**LLM smoke tests (`tests-integration/test_skill_llm.py`)** — Requires `ANTHROPIC_API_KEY`. Run with `make test-llm`.
+**Key rules:**
+- One test per method or per logical CRUD lifecycle is enough. Don't over-test — you're checking "does the API call work?", not exhaustive coverage.
+- Don't test error cases here — unit tests already cover those with mocks.
+- Always clean up write operations in `finally` blocks. If no delete method exists, mark resources as completed/archived.
+- Use `print()` for visibility — integration tests often run interactively.
+- Use timestamped names for created resources (e.g., `f"test-{int(time.time())}@example.com"`) to avoid collisions.
 
-Sends server context (instructions + skill + tools) to Claude Haiku, asserts correct tool selection:
+**LLM smoke tests (`tests-integration/test_skill_llm.py`)** — Requires `ANTHROPIC_API_KEY` in `.env`. Run with `make test-llm`.
+
+Sends server context (instructions + skill + tools) to Claude Haiku, asserts correct tool selection. The template scaffolds `get_server_context()` and `get_anthropic_client()` — leave those as-is. Replace the commented-out test stub with real tests.
+
+Write **3–5 tests**, one per key tool. Extract a `call_llm()` helper to avoid repeating the system prompt construction:
+
 ```python
-async def get_server_context() -> dict:
-    async with Client(mcp) as client:
-        init = await client.initialize()
-        resources = await client.list_resources()
-        skill_text = ""
-        for r in resources:
-            if "skill://" in str(r.uri):
-                contents = await client.read_resource(str(r.uri))
-                skill_text = contents[0].text
-        tools_list = await client.list_tools()
-        tools = [{"name": t.name, "description": t.description, "input_schema": t.inputSchema} for t in tools_list]
-        return {"instructions": init.instructions, "skill": skill_text, "tools": tools}
+async def call_llm(prompt: str) -> list:
+    """Send a prompt to Claude Haiku with full server context, return tool calls."""
+    ctx = await get_server_context()
+    client = get_anthropic_client()
+    system = (
+        f"You are an assistant.\n\n"
+        f"## Server Instructions\n{ctx['instructions']}\n\n"
+        f"## Skill Resource\n{ctx['skill']}"
+    )
+    response = client.messages.create(
+        model="claude-haiku-4-5-20251001",
+        max_tokens=1024,
+        system=system,
+        messages=[{"role": "user", "content": prompt}],
+        tools=[{"type": "custom", **t} for t in ctx["tools"]],
+    )
+    return [b for b in response.content if b.type == "tool_use"]
 
 class TestSkillLLMInvocation:
     @pytest.mark.asyncio
-    async def test_query_selects_correct_tool(self):
-        ctx = await get_server_context()
-        client = get_anthropic_client()
-        system = f"You are an assistant.\n\n## Instructions\n{ctx['instructions']}\n\n## Skill\n{ctx['skill']}"
-        response = client.messages.create(
-            model="claude-haiku-4-5-20251001",
-            max_tokens=1024,
-            system=system,
-            messages=[{"role": "user", "content": "Your test prompt here"}],
-            tools=[{"type": "custom", **t} for t in ctx["tools"]],
-        )
-        tool_calls = [b for b in response.content if b.type == "tool_use"]
-        assert len(tool_calls) > 0
-        assert tool_calls[0].name == "expected_tool_name"
+    async def test_list_projects_selected(self):
+        tool_calls = await call_llm("Show me all projects in workspace gid_123456")
+        assert len(tool_calls) > 0, "LLM did not call any tool"
+        assert tool_calls[0].name == "list_projects"
+
+    @pytest.mark.asyncio
+    async def test_create_task_selected(self):
+        tool_calls = await call_llm("Create a task called Review Q3 report in workspace gid_123456")
+        assert len(tool_calls) > 0, "LLM did not call any tool"
+        assert tool_calls[0].name == "create_task"
 ```
+
+**Key rule — include concrete values for required parameters:** If a tool requires parameters (IDs, coordinates, dates), include concrete values in the prompt — even fake ones. Without them, the LLM will correctly ask for clarification instead of calling the tool, and the test will fail with "LLM did not call any tool." Examples:
+- "Show me projects in workspace gid_123456" (not "Show me my projects")
+- "What's the weather at lat=51.5, lon=-0.13?" (not "What's the weather in London?")
+- "Am I busy tomorrow afternoon?" (not "Am I busy Thursday?" — ambiguous date)
 
 ### Build & Test Commands (Python)
 
