@@ -57,6 +57,10 @@ uv sync --dev
 make check                    # format, lint, typecheck, unit tests
 ```
 
+Mocked HTTP, FastMCP Client-based tool tests, skill resource tests. The template scaffolds these — fill them in for every tool. `make check` must pass before proceeding.
+
+See `references/PATTERNS.md` → "Test Patterns (Python)" for the FastMCP Client pattern, ToolError handling, and mock fixtures.
+
 **TypeScript:**
 ```bash
 make check
@@ -69,7 +73,7 @@ This runs: `format:check` → `lint` → `typecheck` → `test`
 - [ ] All tool logic, models, and client code implemented
 - [ ] Linting passes with no errors
 - [ ] Type checking passes with no errors
-- [ ] All tests pass
+- [ ] Unit tests pass (`make check`)
 
 **If any criterion fails:** Fix the reported issues and re-run checks.
 
