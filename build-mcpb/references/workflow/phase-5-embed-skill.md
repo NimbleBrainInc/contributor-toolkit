@@ -176,7 +176,9 @@ See `references/PATTERNS.md` → "LLM smoke tests" for the `call_llm()` helper p
 - [ ] Contributor has approved the SKILL.md content
 - [ ] Skill resource is wired in server code
 - [ ] `resources/list` includes `skill://<name>/usage`
+- [ ] Integration tests written with real assertions (not stubs or TODOs)
 - [ ] Integration tests pass (recommended, not blocking)
+- [ ] LLM smoke tests written with real assertions (not stubs or TODOs)
 - [ ] LLM smoke tests pass (recommended, not blocking)
 
 **If any criterion fails:** Revisit the relevant sub-step above. For integration/LLM tests, discuss with the contributor whether to fix now or defer.
