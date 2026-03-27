@@ -32,7 +32,7 @@ make check
 - [ ] All tool logic, models, and client code implemented
 - [ ] Linting passes with no errors
 - [ ] Type checking passes with no errors
-- [ ] All tests pass
+- [ ] Unit tests pass (`make check`)
 
 **If any criterion fails:** Fix the reported issues and re-run checks.
 
