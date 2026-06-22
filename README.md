@@ -1,3 +1,24 @@
+> [!WARNING]
+> **This repository is archived and no longer maintained.**
+>
+> Its skills have moved to **[NimbleBrainInc/skills](https://github.com/NimbleBrainInc/skills)** and are now installed via the open [Agent Skills standard](https://agentskills.io):
+>
+> | Was (here) | Now (skills repo) |
+> |---|---|
+> | `nimblebrain-contributor` | **`contributor`** |
+> | `build-mcpb` | **`mcpb`** |
+>
+> ```bash
+> npx skills add nimblebraininc/skills --skill contributor
+> npx skills add nimblebraininc/skills --skill mcpb
+> ```
+>
+> **👉 Active home:** https://github.com/NimbleBrainInc/skills
+>
+> Issues and PRs are frozen. Please re-file anything still relevant against the skills repo.
+
+---
+
 # NimbleBrain Contributor Toolkit
 
 Claude Code skills for contributing to NimbleBrain open source. Install once, use anywhere.
