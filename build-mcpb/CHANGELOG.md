@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.7.0](https://github.com/NimbleBrainInc/contributor-toolkit/compare/build-mcpb/v0.6.0...build-mcpb/v0.7.0) (2026-06-22)
+
+
+### Features
+
+* **build-mcpb:** add LLM smoke test guidance in phase-3 and PATTERNS ([e1387b5](https://github.com/NimbleBrainInc/contributor-toolkit/commit/e1387b5670e6a50da12f57c8fba1e45fc935bc07))
+* **build-mcpb:** improve integration test guidance in phase-3 and PATTERNS ([4b5675e](https://github.com/NimbleBrainInc/contributor-toolkit/commit/4b5675e36d469589b797de76cc0624077566ab87))
+* **build-mcpb:** use integration issue as warm-start contract in phase 0 ([28237fa](https://github.com/NimbleBrainInc/contributor-toolkit/commit/28237fa719f3f20827429d387c1c91320d468a32))
+
+
+### Bug Fixes
+
+* **build-mcpb:** add back stub-gatekeeping criteria lost in conflict resolution ([05ffe29](https://github.com/NimbleBrainInc/contributor-toolkit/commit/05ffe2933f0b1979ef288d490d2a99428eb2c324))
+* **build-mcpb:** allow mixed-case owner names in manifest name regex ([93e5f9e](https://github.com/NimbleBrainInc/contributor-toolkit/commit/93e5f9ee78f7562d0411f5e1e766cd3d147716b0))
+* **build-mcpb:** allow mixed-case owner names in name regex ([0a06b2a](https://github.com/NimbleBrainInc/contributor-toolkit/commit/0a06b2a96a804cbf2324194456e170b297b2a81a))
+* **build-mcpb:** document embedded skill frontmatter in SKILL_FORMAT.md ([8882dcc](https://github.com/NimbleBrainInc/contributor-toolkit/commit/8882dcc830dabf34a3e40b99ca2bb7d81c874660))
+* **build-mcpb:** document embedded skill frontmatter in SKILL_FORMAT.md ([bf3da5d](https://github.com/NimbleBrainInc/contributor-toolkit/commit/bf3da5dae1fb0285dda8bf60718696a5a08d693f))
+* **build-mcpb:** move integration/LLM tests from Phase 3 to Phase 5 ([1caff06](https://github.com/NimbleBrainInc/contributor-toolkit/commit/1caff0666f8e1b0614741f137d9d4b6307b22697))
+* **build-mcpb:** remove intro prose from Phase 5f integration tests step ([0b4fca9](https://github.com/NimbleBrainInc/contributor-toolkit/commit/0b4fca99e15c3bd4d79d47cd4b692de2963a2791))
+* **build-mcpb:** resolve conflict — move integration/LLM test guidance to Phase 5 ([923ddf4](https://github.com/NimbleBrainInc/contributor-toolkit/commit/923ddf4cfc42635580b38653ceb25a0c42c7bbea))
+
 ## [0.6.0](https://github.com/NimbleBrainInc/contributor-toolkit/compare/build-mcpb/v0.5.0...build-mcpb/v0.6.0) (2026-03-13)
 
 
